@@ -1,0 +1,26 @@
+[workspace]
+resolver = "2"
+members = ["contracts/*", "common/*", "tests"]
+
+[workspace.dependencies]
+soroban-sdk = "20.0.0"
+soroban-env-common = "20.0.0"
+shared = { path = "./common/shared" }
+proc_macros = { path = "./common/proc_macros" }
+bridge_storage = { path = "./common/bridge_storage" }
+ethnum = "1.4.0"
+arrayref = "0.3.7"
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true
+
+[profile.release-with-logs]
+inherits = "release"
+debug-assertions = true

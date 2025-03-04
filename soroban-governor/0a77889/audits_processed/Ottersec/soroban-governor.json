@@ -1,0 +1,90 @@
+{
+    "project_name": "Soroban Governor",
+    "audit_firm": "Otter Sec",
+    "chain": "Stellar",
+    "commit_hash": "0a77889",
+    "github_repo_url": "https://github.com/script3/soroban-governor",
+    "findings": [
+        {
+            "title": "Balance Cache Inconsistency",
+            "description": "There is a potential vulnerability in `balance::transfer_balance` related to caching balances before and after the transfer, especially when the sender (from) and receiver (to) addresses are the same. The function retrieves the balances (from_balance and to_balance) for the sender and receiver addresses before performing the actual transfer. However, there is no check to ensure that these cached values are utilized consistently throughout the transfer process. If from and to are the same address (self-transfer), the vulnerability arises. The function subtracts the transfer amount (amount) from the cached from_balance. Since from and to are the same, it then adds the same amount back to the same cached to_balance. In effect, this discrepancy allows the user to obtain free tokens.",
+            "severity": "Critical",
+            "function": "transfer_balance",
+            "files": [
+                "votes/src/balance.rs"
+            ],
+            "impacted_code": "pub fn transfer_balance(e: &Env, from: &Address, to: &Address, amount: i128) {\n    let from_balance = storage::get_balance(e, from);\n    if from_balance < amount {\n        panic_with_error!(e, TokenVotesError::BalanceError);\n    }\n    let to_balance = storage::get_balance(e, to);\n    [...]\n    storage::set_balance(e, from, &(from_balance - amount));\n    storage::set_balance(e, to, &(to_balance + amount));\n}"
+        },
+        {
+            "title": "Faulty Vote History Retrieval",
+            "description": "The function `checkpoint` inherently assumes that the `vote_ledgers` vector is sorted, as it relies on this to efficiently locate relevant checkpoints utilizing binary search. However, `add_vote_ledger` appends new entries to the `vote_ledgers` vector via `push_back`, which does not guarantee that the vector remains sorted. This will result in issues if a new vote ledger sequence is lower than the previous one, as such an entry will invalidate the binary search method. Binary search will potentially find incorrect positions for checkpoints, resulting in inconsistencies due to inaccurate voting history retrieval.",
+            "severity": "Medium",
+            "function": "add_vote_ledger",
+            "files": [
+                "votes/src/storage.rs"
+            ],
+            "impacted_code": "pub fn add_vote_ledger(e: &Env, sequence: u32) {\n    [...]\n    if let Some(last) = vote_ledgers.last() {\n        if last == sequence {\n            return;\n        }\n    }\n    vote_ledgers.push_back(sequence);\n    storage::set_vote_ledgers(&e, &vote_ledgers);\n}"
+        },
+        {
+            "title": "Insufficient TTL for Checkpoints",
+            "description": "The vulnerability lies in the way `storage::set_total_supply_checkpoints` sets the Time To Live (TTL) for the total supply checkpoints. The function stores an array of total supply values (balance) at different points in time. These checkpoints are utilized to calculate voting power during governance proposals. The TTL is set to `MAX_CHECKPOINT_AGE_LEDGERS` (which is equal to eight) to ensure checkpoints are available for the entire voting period (a maximum of seven days) and a little extra time for potential ledger inconsistencies. However, the total lifetime a checkpoint needs to be available may exceed `MAX_CHECKPOINT_AGE_LEDGERS`, when `vote_period + grace_period` surpasses eight days.",
+            "severity": "Medium",
+            "function": "set_total_supply_checkpoints",
+            "files": [
+                "votes/src/storage.rs"
+            ],
+            "impacted_code": "pub fn set_total_supply_checkpoints(e: &Env, balance: &Vec<u128>) {\n    e.storage()\n    .temporary()\n    .set(&TOTAL_SUPPLY_CHECK_KEY ,balance);\n    // Checkpoints only need to exist for at least 7 days to ensure that correct\n    // vote periods can be tracked for the entire max voting period of 7 days.\n    // TTL is 8 days of ledgers, providing some wiggle room for fast ledgers.\n    e.storage().temporary().extend_ttl (\n    &TOTAL_SUPPLY_CHECK_KEY ,\n    MAX_CHECKPOINT_AGE_LEDGERS ,\n    MAX_CHECKPOINT_AGE_LEDGERS ,\n    );\n}"
+        },
+        {
+            "title": "Governor Proposal Stalling",
+            "description": "The settings parameter validation in `settings::require_valid_settings` is lax. The current validation in `require_valid_settings` allows settings with `vote_threshold == 0` and `grace_period == 0`. A value of zero for `vote_threshold` means no minimum number of votes is required to pass a proposal, rendering the governance process meaningless. When `grace_period` is zero, it removes the buffer period after voting ends, resulting in a situation where successfully closing the proposal becomes impossible.",
+            "severity": "Low",
+            "function": "require_valid_settings",
+            "files": [
+                "governor/src/settings.rs"
+            ],
+            "impacted_code": "pub fn require_valid_settings(e: &Env, settings: &GovernorSettings) {\n    if settings.vote_period > MAX_VOTE_PERIOD {\n        panic_with_error!(&e, GovernorError::InvalidSettingsError)\n    }\n    if settings.vote_delay + settings.vote_period + settings.timelock + settings.grace_period *\n    2 ,!\n    > MAX_PROPOSAL_LIFETIME\n    {\n        panic_with_error!(&e, GovernorError::InvalidSettingsError)\n    }\n    if settings.proposal_threshold < 1\n    || settings.counting_type > 0b111\n    || settings.quorum > 9999\n    || settings.vote_threshold > 9999\n    {\n        panic_with_error!(&e, GovernorError::InvalidSettingsError)\n    }\n}\n"
+        },
+        {
+            "title": "Expired Allowance Miscalculation",
+            "description": "The SEP-41 standard allows the optional specification of an expiration time for allowances. This means an account (from) may grant spending permission to another account (spender) for a limited time. The current implementation of allowances simply retrieves the stored allowance data utilizing `storage::get_allowance(&e, &from, &spender)`. It then returns only the amount field from the retrieved data. This approach ignores the expiration time associated with the allowance. If an allowance has expired (the expiration time has passed), the retrieved data might still contain a non-zero amount value. The `allowance` function, by simply returning this amount, would incorrectly indicate that the spender can still spend that amount.",
+            "severity": "Low",
+            "function": "allowance",
+            "files": [
+                "votes/src/contract.rs"
+            ],
+            "impacted_code": "fn allowance(e: Env, from: Address, spender: Address) -> i128 {\n    let result=storage::get_allowance(&e, &from, &spender);\n    result.amount\n}"
+        },
+        {
+            "title": "Centralization Risk",
+            "description": "Within `contract::cancel`, the current implementation allows the council to cancel any proposal, including those proposing changes to the governor's settings. This grants the council significant power and introduces a centralization risk. The council may potentially block changes unilaterally.",
+            "severity": "Low",
+            "function": "cancel",
+            "files": [
+                "governor/src/contract.rs"
+            ],
+            "impacted_code": "fn cancel(e: Env, from: Address, proposal_id: u32) {\n    [...]\n    // require from to be the creator or the council\n    if from != proposal_data.creator {\n        let settings=storage::get_settings(&e);\n        if from != settings.council {\n            panic_with_error!(&e, GovernorError::UnauthorizedError);\n        }\n    }\n    [...]\n}"
+        },
+        {
+            "title": "Failure To Emit Event",
+            "description": "`contract::close` checks if the current ledger sequence is beyond the grace period after the voting ends. If so, it marks the proposal as expired by setting `proposal_data.status = ProposalStatus::Expired`. However, it does not call `events::proposal_expired` to emit an event for this specific expiration scenario. External observers or other parts of the application relying on governance events might not be notified about proposals expiring within the close function. This may result in incomplete information about the lifecycle of proposals and a lack of transparency in the governance process.",
+            "severity": "Informational",
+            "function": "close",
+            "files": [
+                "governor/src/contract.rs",
+                "governor/src/events.rs"
+            ],
+            "impacted_code": "pub fn proposal_expired(e: &Env, proposal_id: u32) {\n    let topics = (Symbol::new(&e,\"proposal_expired\"), proposal_id);\n    e.events().publish(topics, ());\n}\nfn close(e: Env, proposal_id: u32) {\n    [...]\n    let settings = storage::get_settings(&e);\n    let vote_count = storage::get_proposal_vote_count(&e, proposal_id).unwrap_optimized();\n    if e.ledger().sequence() > proposal_data.vote_end + settings.grace_period {\n        // proposal took too long to be closed. Mark expired and close.\n        proposal_data.status = ProposalStatus::Expired;\n    }\n    [...]\n}"
+        },
+        {
+            "title": "Precision Loss In Vote Calculation",
+            "description": "The current implementation of `is_over_quorum` and `is_over_threshold` within `VoteCount` is susceptible to precision loss due to integer division. The calculation of `quorum_requirement_floor` and `for_votes` in `is_over_quorum` and `is_over_threshold` respectively involves dividing the product of two integers by a third integer. Integer division truncates any fractional remainder, potentially leading to inaccurate results, especially when dealing with percentages (represented as basis points here).",
+            "severity": "Informational",
+            "function": "is_over_quorum",
+            "files": [
+                "governor/src/vote_count.rs"
+            ],
+            "impacted_code": "pub fn is_over_quorum(&self, quorum: u32, counting_type: u32, total_votes: i128) -> bool {\n    let quorum_votes = self.count_quorum(counting_type);\n    let quorum_requirement_floor = (total_votes * quorum as i128) / BPS_SCALAR;\n    quorum_votes > quorum_requirement_floor\n}\npub fn is_over_threshold(&self, vote_threshold: u32) -> bool {\n    let against_and_for_votes = self.against + self._for;\n    if against_and_for_votes == 0 {\n        return false;\n    }\n    let for_votes = (self._for * BPS_SCALAR) / against_and_for_votes;\n    for_votes > vote_threshold as i128\n}"
+        }
+    ]
+}

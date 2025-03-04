@@ -1,0 +1,121 @@
+{
+    "project_name": "comet-contracts-v1",
+    "audit_firm": "OtterSec",
+    "chain": "Soroban",
+    "commit_hash": "4abcb8c",
+    "github_repo_url": "https://github.com/CometDEX/comet-contracts-v1",
+    "findings": [
+        {
+            "title": "PoolDrainageDueToRoundingError",
+            "description": "In execute_swap_exact_amount_out ,the pool may be drained as it does not enforce a minimum input amount ( token_amount_in ) greater than zero due to rounding errors that favor the user. Due to a lack of an explicit check for token_amount_in being greater than zero before updating the balances, if token_amount_in is zero or negative (due to rounding errors), the pool\u2019s input token balance (in_record.balance ) would be increased by an insignificant amount. The output token balance (out_record.balance ) would be reduced by token_amount_out . This may allow an attacker to drain the pool without providing a meaningful amount of input tokens.",
+            "severity": "high",
+            "function": "execute_swap_exact_amount_out",
+            "files": [
+                "src/c_pool/call_logic/pool.rs"
+            ],
+            "impacted_code": "pub fn execute_swap_exact_amount_out(\n    [...]\n) -> (i128,i128) {\n    assert_with_error!(&e, !read_freeze(&e), Error::ErrFreezeOnlyWithdrawals);\n    assert_with_error!(&e, token_amount_out >= 0, Error::ErrNegative);\n    assert_with_error!(&e, max_amount_in >= 0, Error::ErrNegative);\n    assert_with_error!(&e, max_price >= 0, Error::ErrNegative);\n    assert_with_error!(&e, read_public_swap(&e), Error::ErrSwapNotPublic);\n    [...]\n}"
+        },
+        {
+            "title": "LackOfAccessControl",
+            "description": "set_freeze_status in comet enables freezing or unfreezing of the pool. It is intended to be callable only by the pool admin. However, due to a lack of access control functionality, anyone may invoke set_freeze_status. As a result, malicious users may abuse set_freeze_status to disrupt the normal operation of the contract by randomly freezing the pool, affecting legitimate users of the pool.",
+            "severity": "high",
+            "function": "set_freeze_status",
+            "files": [
+                "src/c_pool/comet.rs"
+            ],
+            "impacted_code": "fn set_freeze_status(e: Env, caller: Address, val: bool) {\n    execute_set_freeze_status(e, caller, val);\n}"
+        },
+        {
+            "title": "InconsistenciesInMathModuleImplementation",
+            "description": "The precision of the fixed-point math in Comet is 10^7, which is low compared to that set in Balancer V1, which is 10^18. This low precision in the Comet system may be problematic in a scenario where there are two tokens with very different prices, one being significantly cheaper than the other, with the low precision (10^7), the representation of the prices may not have enough decimal places to accurately capture the differences between the high and low-priced tokens, rendering pools containing both high-priced and low-priced tokens unusable due to the lack of precision. Furthermore, the operations for multiplications, divisions, and powers consistently round down, regardless of whether they favor the user or the pool. This lack of rounding consistency yields inaccuracies, especially in calculations involving pool invariants.",
+            "severity": "medium",
+            "function": null,
+            "files": [
+                "src/c_consts.rs"
+            ],
+            "impacted_code": "//! Comet Pool Constants\nuse soroban_fixed_point_math::STROOP;\npub const BONE: i128 = STROOP as i128;\n[...]"
+        },
+        {
+            "title": "PersistentRecordOfUnboundTokens",
+            "description": "In execute_unbind , within bind, when tokens are unbound, their old records are not removed from record_map, potentially resulting in a situation where the map\u2019s size becomes a limiting factor due to the ledger entry size limit. If the accumulated records for unbound tokens become substantial, they may become limited by the ledger\u2019s size constraints. The limitation on the map size may prevent the addition of new tokens to the liquidity pool when attempting to bind a new token.",
+            "severity": "low",
+            "function": "execute_unbind",
+            "files": [
+                "src/c_pool/call_logic/bind.rs"
+            ],
+            "impacted_code": "pub fn execute_unbind(e: Env, token: Address, user: Address) {\n    [...]\n    record.balance = 0;\n    record.bound = false;\n    record.index = 0;\n    record.denorm = 0;\n    record_map.set(last_token, record_current);\n    record_map.set(token.clone(), record);\n    write_record(&e, record_map);\n    [...]\n}"
+        },
+        {
+            "title": "MissingParameterValidation",
+            "description": "Within join_pool in pool, a user may transfer tokens to the pool without receiving any shares in return when pool_amount_out is zero. When calling join_pool with pool_amount_out set to zero, instead of reverting, the function proceeds to execute the execute_join_pool logic, which calculates the ratio, iterates over tokens, and calculates the amount to deposit for each token. However, the calculated ratio is effectively zero Since pool_amount_out is zero. As a result, for each token, the calculated token_amount_in becomes zero (due to the ratio being zero). Thus, users may transfer tokens to the pool without receiving any shares in return, which may be unintuitive and unexpected for users, as they might assume that providing tokens to the pool should always result in receiving a share of the pool.",
+            "severity": "low",
+            "function": "execute_join_pool",
+            "files": [
+                "src/c_pool/call_logic/pool.rs"
+            ],
+            "impacted_code": "pub fn execute_join_pool(e: Env, pool_amount_out: i128, max_amounts_in: Vec<i128>, user: Address) {\n    assert_with_error!(&e, !read_freeze(&e), Error::ErrFreezeOnlyWithdrawals);\n    assert_with_error!(&e, pool_amount_out >= 0, Error::ErrNegative);\n    assert_with_error!(&e, read_finalize(&e), Error::ErrNotFinalized);\n    [...]\n}"
+        },
+        {
+            "title": "MisallocationOfExitFee",
+            "description": "execute_exit_pool enables a user to exit the pool by supplying a specific quantity of pool shares. Following the computation of the exit fee, execute_exit_pool transfers this fee to the share contract identified by the address share_contract_id. Presently, this contract\u2019s address is determined using e.current_contract_address(), resulting in the pool's address. Consequently, rather than directing the exit fee to the intended recipient, the factory, the amount is sent to the address of the pool.",
+            "severity": "low",
+            "function": "execute_exit_pool",
+            "files": [
+                "c_pool/call_logic/pool.rs"
+            ],
+            "impacted_code": "pub fn execute_exit_pool(e: Env, pool_amount_in: i128, min_amounts_out: Vec<i128>, user: Address) {\n    [...]\n    assert_with_error!(&e, ratio != 0, Error::ErrMathApprox);\n    pull_shares(&e, user.clone(), pool_amount_in);\n    let share_contract_id = e.current_contract_address();\n    push_shares(&e, share_contract_id, EXIT_FEE);\n    [...]\n}"
+        },
+        {
+            "title": "IncorrectImplementationOfBurnLogic",
+            "description": "While burning liquidity pool tokens, in its current implementation, burn burns tokens (amount) from an account (from), but it fails to adjust the number of tokens in that liquidity pool. Thus, when a liquidity provider calls burn to withdraw their liquidity and claim the fees, the contract only burns the tokens from the liquidity provider\u2019s account. Still, it does not adjust the pool\u2019s internal state (total_shares), resulting in an inconsistency where the liquidity pool token supply suggests the presence of more liquidity than what is contained in the pool. This disparity in the amount of liquidity pool tokens may impact the decentralized exchange\u2019s pricing mechanism and overall stability.",
+            "severity": "low",
+            "function": "burn",
+            "files": [
+                "src/c_pool/comet.rs"
+            ],
+            "impacted_code": "fn burn(e: Env, from: Address, amount: i128) {\n    from.require_auth();\n    check_nonnegative_amount(amount);\n    e.storage().instance().extend_ttl(SHARED_LIFETIME_THRESHOLD,SHARED_BUMP_AMOUNT);\n    spend_balance(&e, from.clone(), amount);\n    TokenUtils::new(&e).events().burn(from, amount);\n}"
+        },
+        {
+            "title": "ErrorInExitFeeCalculation",
+            "description": "In pool, execute_exit_pool utilizes push_shares, passing the EXIT_FEE parameter for exit fee calculation. Similarly, in execute_wdr_tokn_amt_in_get_lp_tokns_out and execute_wdr_tokn_amt_out_get_lp_tokns_in, push_shares and burn_shares are invoked with the EXIT_FEE parameter. This results in an inaccurate exit fee calculation, as the appropriate variable to use is exit_fee, not EXIT_FEE. The disparity in handling exit fees could result in unpredictable behavior, potentially charging users an incorrect amount upon exiting the pool. Such inconsistencies may impact the liquidity pool\u2019s economic incentives and overall stability.",
+            "severity": "low",
+            "function": "execute_exit_pool",
+            "files": [
+                "pair/src/lib.rs"
+            ],
+            "impacted_code": "pub fn execute_exit_pool(e: Env, pool_amount_in: i128, min_amounts_out: Vec<i128>, user: Address) {\n    [...]\n    push_shares(&e, share_contract_id, EXIT_FEE);\n    [...]\n}\n\npub fn execute_wdr_tokn_amt_in_get_lp_tokns_out (\n    e: Env,\n    token_out: Address,\n    pool_amount_in: i128,\n    min_amount_out: i128,\n    user: Address,\n) -> i128 {\n    [...]\n    pull_shares(&e, user.clone(), pool_amount_in);\n    burn_shares(&e, c_sub(&e, pool_amount_in, EXIT_FEE).unwrap_optimized());\n    let factory = read_factory(&e);\n    push_shares(&e, factory, EXIT_FEE);\n    [...]\n}"
+        },
+        {
+            "title": "FaultyTokenLimitCheck",
+            "description": "In execute_rebind within bind, an inaccurate validation exists concerning the limit on the number of bound tokens in the pool. The assert statement, which examines whether read_tokens(&e).len() < MAX_BOUND_TOKENS, mistakenly rejects valid rebind operations when adjusting the values of an already bound token. The maximum number of bound tokens is already verified in execute_bind. Therefore, when calling execute_rebind, if the pool already contains the maximum allowable tokens (i.e., MAX_BOUND_TOKENS, which is set to eight tokens), this assert statement will fail, hindering the addition of further tokens, even if they are within the allowable limit.",
+            "severity": "low",
+            "function": "execute_rebind",
+            "files": [
+                "pair/src/lib.rs"
+            ],
+            "impacted_code": "pub fn execute_rebind(e: Env, token: Address, balance: i128, denorm: i128, admin: Address) {\n    assert_with_error!(&e, balance >= 0, Error::ErrNegative);\n    assert_with_error!(&e, !read_finalize(&e), Error::ErrFinalized);\n    assert_with_error!(\n        &e,\n        read_tokens(&e).len() < MAX_BOUND_TOKENS,\n        Error::ErrMaxTokens\n    );\n    [...]\n}"
+        },
+        {
+            "title": "RemovalOfUnused/Redundantcode",
+            "description": "The codebase contains several instances of unused or redundant code, including calling read_tokens twice in execute_bind and redundant checks in execute_join_pool among others. Additionally, there are unused storage types in src/c_pool/storage_types.rs.",
+            "severity": "informational",
+            "function": null,
+            "files": [
+                "c_pool/call_logic/bind.rs",
+                "c_pool/call_logic/pool.rs",
+                "src/c_pool/storage_types.rs"
+            ],
+            "impacted_code": "pub fn execute_bind(e: Env, token: Address, balance: i128, denorm: i128, admin: Address) {\n    [...]\n    let index = read_tokens(&e).len();\n    assert_with_error!(&e, index < MAX_BOUND_TOKENS, Error::ErrMaxTokens);\n    let mut tokens_arr = read_tokens(&e);\n    let mut record_map = read_record(&e);\n    [...]\n}\n\npub fn execute_join_pool(e: Env, pool_amount_out: i128, max_amounts_in: Vec<i128>, user: Address) {\n    [...]\n    let token_amount_in =\n        c_add(&e, c_mul(&e, ratio, rec.balance).unwrap_optimized(), 1).unwrap_optimized();\n    if token_amount_in == 0 {\n        panic_with_error!(&e, Error::ErrMathApprox);\n    }\n    [...]\n}\n\npub enum DataKeyToken {\n    [...]\n    Nonce(Address),\n    State(Address),\n    Admin,\n}"
+        },
+        {
+            "title": "CodeMaturity",
+            "description": "The absence of emitted events in administrative tasks such as modifying swap fee, public swap, controller, or freeze state variables in setter and during minting of shares in token_utility, within mint_shares indicates that there are no events triggered or logged when these changes occur. Events are crucial for providing transparency and allowing external systems or users to track the state changes in a contract. Furthermore, In metadata, within read_swap_fee, if SwapFee is not discovered in the storage, it returns zero as the default value. Instead of returning zero, returning MIN_FEE is more suitable to improve clarity. It should be noted that this is an unreachable case.",
+            "severity": "informational",
+            "function": null,
+            "files": [
+                "src/c_pool/metadata.rs"
+            ],
+            "impacted_code": "pub fn read_swap_fee(e: &Env) -> i128 {\n    let key = DataKey::SwapFee;\n    e.storage().instance().get::<DataKey, i128>(&key).unwrap_or(0)\n}"
+        }
+    ]
+}

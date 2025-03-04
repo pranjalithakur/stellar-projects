@@ -1,0 +1,39 @@
+[workspace]
+members = [
+    "deploy",
+    "token",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0-excellar-token"
+edition = "2024"
+rust-version = "1.75"
+exclude = [".github/"]
+
+
+[workspace.dependencies]
+soroban-sdk = { version = "20.3.1" }
+soroban-token-sdk = { version = "20.3.1" }
+soroban-cli = { version = "20.3.1" }
+
+[workspace.dev_dependencies]
+soroban-sdk = { version = "20.3.1", features = ["testutils"] }
+
+[profile.dev]
+resolver = "2"
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true
+
+
+[profile.release-with-logs]
+inherits = "release"
+debug-assertions = true

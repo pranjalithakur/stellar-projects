@@ -1,0 +1,366 @@
+{
+    "project_name": "Phoenix DeFi Hub",
+    "audit_firm": "Veridise Inc.",
+    "chain": "Soroban",
+    "commit_hash": "d65eef7 and 384c8cf",
+    "github_repo_url": "https://github.com/Phoenix-Protocol-Group/phoenix-contracts",
+    "findings": [
+        {
+            "title": "Incorrect access control when updating pool configuration",
+            "description": "The update_config function in the pool contract employs access control by checking if the sender matches the admin. However, the critical flaw here is that sender is derived from a parameter passed to the function, rather than validating that the admin saved in the storage has authorized the contract invocation.",
+            "severity": "Critical",
+            "function": "update_config",
+            "files": [
+                "contracts/pool/src/contract.rs"
+            ],
+            "impacted_code": "1ifsender != utils::get_admin(&env) {\n2 panic!(\"Pool: UpdateConfig: Unauthorized\");\n3}"
+        },
+        {
+            "title": "Pool contract can be drained due to negative referral fee",
+            "description": "The swap function\u2019s execution flow currently includes a validation check in the do_swap function to ensure that the referral_fee does not exceed the maximum fee allowed. However, there is a significant oversight as there is no check to prevent the referral_fee from being negative. A negative referral_fee results in a negative referral_fee_amount, which when subtracted from return_amount, increases the return_amount.",
+            "severity": "Critical",
+            "function": "do_swap",
+            "files": [
+                "contracts/pool/src/contract.rs"
+            ],
+            "impacted_code": "1let referral_fee_amount: i128 = return_amount * Decimal::bps(referral_fee);\n2let return_amount: i128 = return_amount - referral_fee_amount;\n3\n4ComputeSwap { return_amount, spread_amount, commission_amount, referral_fee_amount, }"
+        },
+        {
+            "title": "Unbounded instance storage",
+            "description": "In the factory contract, the save_lp_vec and save_lp_vec_with_tuple_as_key methods use instance storage, which is problematic due to its limited capacity and increasing cost with more pools, eventually making the factory contract unable to deploy additional pools.",
+            "severity": "High",
+            "function": "save_lp_vec",
+            "files": [
+                "contracts/factory/src/storage.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Factory can be made to deploy malicious pools",
+            "description": "The create_liquidity_pool function allows lp_wasm_hash as user input, leading to the risk of deploying arbitrary and potentially malicious contract code, undermining the trust and integrity of the platform.",
+            "severity": "High",
+            "function": "create_liquidity_pool",
+            "files": [
+                "contracts/factory/src/contract.rs",
+                "contracts/pool/src/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Deployment of pools can be front-runned",
+            "description": "Since the pool identifier relies on the deployer account and token pair addresses, all users can potentially deploy a pool for any token pair, hindering legitimate creators from utilizing the system.",
+            "severity": "High",
+            "function": "create_liquidity_pool",
+            "files": [
+                "contracts/factory/src/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "The usage of assert_max_spread assume pool tokens have the same amount of decimals",
+            "description": "The do_swap function converts belief_price to a Decimal representing a percentage, resulting in possible panic or bad swap due to the spread when tokens have different decimal precisions.",
+            "severity": "High",
+            "function": "do_swap",
+            "files": [
+                "contracts/pool/src/contract.rs"
+            ],
+            "impacted_code": "1let belief_price = belief_price.map(Decimal::percent);"
+        },
+        {
+            "title": "Any user can DoS important functionality of the stake contract",
+            "description": "Key functions like bond and distribute_rewards iterate over all distributions using a for loop, and the ability to create distributions lacks access control, allowing a potential DoS attack.",
+            "severity": "High",
+            "function": "create_distribution_flow",
+            "files": [
+                "contracts/stake/src/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Unbound breaks the reward distribution",
+            "description": "When a user unbonds part of their stake, the share_correction and withdrawn_rewards calculations still include those for the unbonded stake, disrupting accurate reward distribution.",
+            "severity": "High",
+            "function": "unbound",
+            "files": [
+                "contracts/stake/src/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Incorrect return_amount in stable pool",
+            "description": "The compute_swap function does not subtract the commission_amount from return_amount, resulting in users receiving more tokens than they should in do_swap.",
+            "severity": "High",
+            "function": "compute_swap",
+            "files": [
+                "contracts/stable_pool/src/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Split deposit should target the new pool ratio",
+            "description": "The function split_deposit_based_on_pool_ratio uses the pool ratio before the swap occurs rather than after, leading to the user being rewarded fewer LP shares.",
+            "severity": "Medium",
+            "function": "split_deposit_based_on_pool_ratio",
+            "files": [
+                "pool/scr/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Soroban Storage DoS Pattern in Factory contract",
+            "description": "Unbounded growth of the lp_vec in create_liquidity_pool results in a storage footprint that eventually makes pool creation impossible due to network limits.",
+            "severity": "Medium",
+            "function": "create_liquidity_pool",
+            "files": [
+                "contracts/factory/src/contract.rs"
+            ],
+            "impacted_code": "1let mut lp_vec = get_lp_vec(&env);\n2lp_vec.push_back(lp_contract_address.clone());\n3save_lp_vec(&env, lp_vec);"
+        },
+        {
+            "title": "The do_swap function only allows belief prices down to 1%",
+            "description": "The transformation of belief_price implies that the smallest value a user can specify is limited to 1%, problematic for token pairs with price relationships smaller than 1%.",
+            "severity": "Medium",
+            "function": "do_swap",
+            "files": [
+                "contracts/pool/src/contract.rs"
+            ],
+            "impacted_code": "1let belief_price = belief_price.map(Decimal::percent);"
+        },
+        {
+            "title": "Multihop swaps do not allow to express belief price for all the swap operations",
+            "description": "The function accepts a single belief_price for the entire sequence of swaps, rather than individual prices for each leg, risking financial loss from price fluctuations.",
+            "severity": "Medium",
+            "function": "swap",
+            "files": [
+                "contracts/multihop/src/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Incorrect assignment of total_fee_bps",
+            "description": "In query_pool_info_for_factory, total_fee_bps is erroneously set to max_allowed_spread_bps from the pool configuration, misinforming stakeholders about transaction costs.",
+            "severity": "Low",
+            "function": "query_pool_info_for_factory",
+            "files": [
+                "contracts/pool/src/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Invalid value returned by total_comission_amount",
+            "description": "The simulate_swap function incorrectly sums commission amounts of each swap, leading to an invalid total, due to mixing values across different token denominations.",
+            "severity": "Low",
+            "function": "simulate_swap",
+            "files": [
+                "contracts/multihop/src/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "User can accidentally swap the wrong asset",
+            "description": "If offer_asset is neither config.token_a nor config.token_b, the function defaults to treating it as if it were config.token_b, which can lead to unintentional swaps.",
+            "severity": "Low",
+            "function": "do_swap",
+            "files": [
+                "contracts/pool/src/contract.rs"
+            ],
+            "impacted_code": "1let (pool_balance_sell, pool_balance_buy) = if offer_asset == config.token_a {\n2 (pool_balance_a, pool_balance_b)\n3} else {\n4 (pool_balance_b, pool_balance_a)\n5};"
+        },
+        {
+            "title": "Soroban storage limitation discourages staking",
+            "description": "The stakes vector grows with each bond operation, becoming more expensive over time, impacting the usability of the contract.",
+            "severity": "Low",
+            "function": "BondingInfo",
+            "files": [
+                "contracts/stake/src/storage.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Incorrect computation of return amount",
+            "description": "In the assert_max_spread invocation, the return_amount is calculated incorrectly, overlooking compute_swap.referral_fee_amount.",
+            "severity": "Low",
+            "function": "do_swap",
+            "files": [
+                "contracts/pool/src/contract.rs"
+            ],
+            "impacted_code": "1assert_max_spread(&env, belief_price, max_spread, offer_amount, compute_swap.return_amount + compute_swap.commission_amount, compute_swap.spread_amount);"
+        },
+        {
+            "title": "Missing max_spread validation",
+            "description": "The do_swap function does not ensure max_spread is within acceptable limits and neither confirms that it is non-negative nor that it does not exceed config.max_allowed_spread_bps.",
+            "severity": "Low",
+            "function": "do_swap",
+            "files": [
+                "contracts/pool/src/contract.rs"
+            ],
+            "impacted_code": "1let max_spread = Decimal::bps(max_spread.map_or_else(|| config.max_allowed_spread_bps, |x| x));"
+        },
+        {
+            "title": "Incorrect decimals assertion",
+            "description": "In the decimal crate's from_str function, an assert is used which is a tautology and allows certain conditions that later lead to panic due to an overflow.",
+            "severity": "Warning",
+            "function": "from_str",
+            "files": [
+                "packages/decimal/src/lib.rs"
+            ],
+            "impacted_code": "4assert!(exp <= Self::DECIMAL_PLACES, \"Too many fractional digits\");"
+        },
+        {
+            "title": "Incorrect event topic when providing liquidity",
+            "description": "In the provide_liquidity function, the events published have an incorrect topic, which should reflect token_b rather than token_a.",
+            "severity": "Warning",
+            "function": "provide_liquidity",
+            "files": [
+                "contracts/pool/src/contract.rs"
+            ],
+            "impacted_code": "8.publish((\"provide_liquidity\", \"token_a\"), &config.token_b);"
+        },
+        {
+            "title": "Max referral fee cannot be changed",
+            "description": "The update_config function does not consider changing the max_referral_bps variable, restricting changes after initialization.",
+            "severity": "Warning",
+            "function": "update_config",
+            "files": [
+                "contracts/pool/src/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Missing, incomplete, or redundant basis-point range checks",
+            "description": "Configuration values like max_allowed_spread_bps and total_fee_bps are not consistently validated to ensure they are between 0 and 10,000 bps.",
+            "severity": "Warning",
+            "function": "initialize",
+            "files": [
+                "contracts/pool/src/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Deployer redundancies",
+            "description": "Checks on deployer are redundant as they will always be false, leading to dead code in deploy_stake_contract and deploy_lp_contract functions.",
+            "severity": "Warning",
+            "function": "deploy_stake_contract",
+            "files": [],
+            "impacted_code": "1let deployer = e.current_contract_address();\n2\n3if deployer != e.current_contract_address() {\n4 deployer.require_auth();\n5}"
+        },
+        {
+            "title": "LP token\u2019s metadata is too simple",
+            "description": "The metadata for LP tokens is hardcoded and identical for all tokens, causing confusion as they do not reflect the specific assets they represent.",
+            "severity": "Warning",
+            "function": "initialize",
+            "files": [
+                "contracts/pool/src/contract.rs"
+            ],
+            "impacted_code": "1token_contract::Client::new(&env, &share_token_address).initialize(\n2 // admin\n3 &env.current_contract_address(),\n4 // number of decimals on the share token\n5 &share_token_decimals,\n6 // name\n7 &\"Pool Share Token\".into_val(&env),\n8 // symbol\n9 &\"POOL\".into_val(&env),\n10);"
+        },
+        {
+            "title": "LP token\u2019s decimals should be constant",
+            "description": "Allowing the decimal count to vary introduces the potential for inconsistency among LP tokens, posing risks for third-party integrations that expect a standard format.",
+            "severity": "Warning",
+            "function": "create_liquidity_pool",
+            "files": [
+                "contracts/factory/src/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Compilation errors",
+            "description": "The specified commit does not compile due to changes made in pool_stable. This can be reproduced by running make test.",
+            "severity": "Warning",
+            "function": "fund_distribution",
+            "files": [
+                "contracts/pool_stable/"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Static tolerance value may lead to high imprecision for small pools",
+            "description": "The constant tolerance value may lead to high imprecision in deposit amounts for small pools, necessitating consideration of pool balance sizes or configurability for accuracy.",
+            "severity": "Warning",
+            "function": "split_deposit_based_on_pool_ratio",
+            "files": [
+                "contracts/pool/src/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Incorrect decimal handling in the decimal package",
+            "description": "The to_i128_with_precision function does not handle the case where precision is greater than decimal_places, which could manifest problems if developers change precision usage.",
+            "severity": "Warning",
+            "function": "to_i128_with_precision",
+            "files": [
+                "packages/decimal/src/lib.rs"
+            ],
+            "impacted_code": "5let divisor = 10i128.pow((self.decimal_places() - precision) as u32);"
+        },
+        {
+            "title": "Curve combinations become increasingly expensive",
+            "description": "In fund_distribution, the combination of curves will become prohibitively expensive over time as old points in the curve are maintained, compounding complexity and storage costs.",
+            "severity": "Warning",
+            "function": "fund_distribution",
+            "files": [
+                "contracts/stake/src/contracts.rs"
+            ],
+            "impacted_code": "2let new_reward_curve = previous_reward_curve.combine(&env, &new_reward_distribution);"
+        },
+        {
+            "title": "Documentation and naming issues",
+            "description": "Here we list a few issues with the documentation and naming issues throughout the codebase, which can result in maintainability issues or future bugs caused by developer misconceptions.",
+            "severity": "Info",
+            "function": "",
+            "files": [
+                "contracts/pool/src/contract.rs",
+                "contracts/pool/src/storage.rs",
+                "packages/curve/src/lib.rs",
+                "packages/decimal/src/lib.rs",
+                "packages/phoenix/src/utils.rs"
+            ],
+            "impacted_code": "\u25b6contracts/pool/src/contract.rs\n\u2022Line 35: Comment references token_wasm_hash as a parameter, but token_wash_hash is actually provided as a member of token_init_info.\n\u25b6contracts/pool/src/storage.rs\n\u2022Line 298: comment states that the amount must be within 1%, but the threshold is configurable\n\u25b6packages/curve/src/lib.rs\n\u2022Line 2: wynd-contracts URL is out-of-date, use https://github.com/wynddao/wynddao/ instead\n\u2022Line 44: \"Constan\" \u2192 \"Constant\"\n\u25b6packages/decimal/src/lib.rs\n\u2022Lines 133-141: These comments fails rust\u2019s doctests.\n\u2022Lines 197-201: Dead code in the comments should be removed to avoid confusion.\n\u25b6packages/phoenix/src/utils.rs\n\u2022Line21:Function assert_approx_ratio does not actually perform a panic or assert, subverting a user\u2019s expectations."
+        },
+        {
+            "title": "Unused code and data types",
+            "description": "Here we list locations of unused code paths, data type definitions, and the like, which can become outdated easily and make overall code base maintenance more difficult.",
+            "severity": "Info",
+            "function": "",
+            "files": [
+                "contracts/multihop/src/contract.rs",
+                "contracts/stake/src/contract.rs",
+                "contracts/stake/src/utils.rs",
+                "packages/decimal/src/lib.rs",
+                "packages/phoenix/src/error.rs"
+            ],
+            "impacted_code": "\u25b6contracts/multihop/src/contract.rs\n\u2022Line 55: admin is set but not used.\n\u25b6contracts/stake/src/contract.rs\n\u2022Line 118: max_distributions is never used.\n\u2022Line 205: manager is never used.\n\u25b6contracts/stake/src/utils.rs\n\u2022Line 5: OptionUint is unused.\n\u25b6packages/decimal/src/lib.rs\n\u2022Line 180: The case Err(Error::Overflow) will never happen since the error is not returned by checked_from_ratio.\n\u2022Line 274: Same as Line 180. The project is configured so that overflow is handled by the native rust code rather than a package-specific error.\n\u25b6packages/phoenix/src/error.rs : This file is empty."
+        },
+        {
+            "title": "Lack of validation on total_shares",
+            "description": "In withdraw_liquidity, the number of total_shares is checked to ensure it is non-zero before computing share_ratio to avoid a divide-by-zero error. However, if total_shares is zero, this indicates a protocol error.",
+            "severity": "Info",
+            "function": "withdraw_liquidity",
+            "files": [
+                "contracts/pool/src/contract.rs"
+            ],
+            "impacted_code": "3iftotal_shares != 0i128 {\n4 share_ratio = Decimal::from_ratio(share_amount, total_shares);\n5}"
+        },
+        {
+            "title": "Unchecked assumptions of get_deposit_amounts arguments",
+            "description": "In get_deposit_amounts, the assumptions about the inputs are not explicitly checked in the function, allowing possible violations in future code versions.",
+            "severity": "Info",
+            "function": "get_deposit_amounts",
+            "files": [
+                "contracts/pool/src/storage.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Unnecessary referral unwrapping",
+            "description": "The provided code unnecessarily unwraps an optional referral value, which impacts maintainability.",
+            "severity": "Info",
+            "function": "swap",
+            "files": [
+                "contracts/multihop/src/contract.rs"
+            ],
+            "impacted_code": "1if let Some(referral) = referral.clone() {\n2 next_offer_amount = lp_client.swap(\n3 &recipient,\n4 &Some(referral),\n5 &op.offer_asset,\n6 &next_offer_amount,\n7 &max_belief_price,\n8 &max_spread_bps,)"
+        }
+    ]
+}

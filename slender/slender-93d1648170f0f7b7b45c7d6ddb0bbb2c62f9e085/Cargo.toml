@@ -1,0 +1,41 @@
+[workspace]
+resolver = "2"
+
+members = [
+    "contracts/common",
+    "contracts/common-token",
+    "contracts/deployer",
+    "contracts/pool",
+    "contracts/s-token",
+    "contracts/debt-token",
+    "interfaces/pool-interface",
+    "interfaces/price-feed-interface",
+    "interfaces/s-token-interface",
+    "interfaces/debt-token-interface",
+    "interfaces/flash-loan-receiver-interface",
+    "mocks/flash-loan-receiver-mock",
+    "mocks/price-feed-mock",
+]
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true
+
+[profile.release-with-logs]
+inherits = "release"
+debug-assertions = true
+
+[workspace.dependencies.soroban-sdk]
+version = "20.3.2"
+
+[workspace.dependencies.soroban-token-sdk]
+version = "20.3.2"
+
+[workspace.dependencies.soroban-fixed-point-math]
+version = "1.0.0"

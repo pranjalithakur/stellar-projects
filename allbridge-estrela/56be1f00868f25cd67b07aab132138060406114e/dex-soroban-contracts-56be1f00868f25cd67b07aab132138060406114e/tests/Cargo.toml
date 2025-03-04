@@ -1,0 +1,41 @@
+[package]
+name = "tests"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+shared = { workspace = true }
+arrayref = { workspace = true }
+soroban-sdk = { workspace = true, features = ["testutils"] }
+hex = "0.4.3"
+rand = "0.8.5"
+color-print = "0.3.5"
+ethnum = "1.4.0"
+
+rand_derive2 = "0.1"
+rayon = "1"
+clap = "4.4"
+clap_derive = "4"
+csv = "1"
+serde = "*"
+serde_derive = "*"
+test-case = "3.3.1"
+
+[[bin]]
+name = "fuzz"
+path = "bin/fuzz.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "random_walk"
+path = "bin/random_walk.rs"
+test = false
+bench = false
+
+[lints.clippy]
+redundant_clone = "warn"
+unreadable_literal = "warn"
+semicolon_if_nothing_returned = "warn"
+or_fun_call = "warn"
+too_many_arguments = "allow"

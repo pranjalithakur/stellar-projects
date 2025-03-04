@@ -1,0 +1,329 @@
+{
+    "project_name": "Airswift - Supply Chain Financing",
+    "audit_firm": "Stellar Audit Bank",
+    "chain": "Stellar",
+    "commit_hash": "c6712721bfa685c305625bbcf2aaccd7f7c38cbd",
+    "github_repo_url": "https://github.com/Airswiftio/SCF/commit/c6712721bfa685c305625bbcf2aaccd7f7c38cbd",
+    "findings": [
+        {
+            "title": "Approvals are stored in Instance storage",
+            "description": "Approvals are typically short-lived (often a single transaction), and do not need to be kept indefinitely. Moreover, Soroban\u2019s authorization framework allows smart contracts to get direct authorization from the caller without requiring a call to appr. Control Audit (2024/06/25): BAD FIX, leading to RAISED SEVERITY Approvals were moved from Persistent to Instance storage. Either over time or through the actions of a malicious user, the accumulation of approvals makes invocations more and more expensive, until the smart contract becomes unusable (Denial of Service). See Stellar\u2019s documentation on Soroban\u2019s instance storage Control Audit (2024/07/02): explicit approvals have been removed in favor of Soroban\u2019s authorization framework, solving the issue.",
+            "severity": "Critical",
+            "function": "",
+            "files": [
+                "argentina_pledge"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Approvals are not revoked upon regular transfer",
+            "description": "Approval set by calling appr on a given TC is not revoked when the TC is transferred using transfer. This enables an attacker to configure an approval on themselves, lend the TC to a victim in exchange for liquidity tokens, and transfer the TC back to themselves without paying off their loan.",
+            "severity": "Critical",
+            "function": "transfer",
+            "files": [
+                "argentina_pledge"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Uncapped supply of token leads to loss of funds",
+            "description": "An owner of a tokenized certificate can split it into an infinite number of tokens, leading to denial of service of the protocol. This is due to a lack of supply capping and the fact that splitting with zero amount is possible.",
+            "severity": "Critical",
+            "function": "split",
+            "files": [
+                "scf_soroban"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Approval is not reset during token transfer",
+            "description": "An address can be set as approved on a token identifier, allowing it to transfer the token through transfer_from. The transfer function doesn\u2019t reset this approval during a transfer, allowing the owner of the token to transfer it and later retrieve it.",
+            "severity": "Critical",
+            "function": "transfer",
+            "files": [
+                "scf_soroban"
+            ],
+            "impacted_code": "write_approval(&env, id, None);"
+        },
+        {
+            "title": "Borrower\u2019s TC may never be transferred back after payoff, leading to loss of funds",
+            "description": "Opening and closing a loan requires both users\u2019 synchronicity: to open a loan, a creditor needs to create an offer that the borrower needs to accept. The creditor can walk back using cancel_loan_offer if they change their mind. When closing a loan, the borrower pays their debt back with an added fee, but the creditor is not compelled to transfer the TC back to the borrower (e.g. if the TC appreciates in value). In this case, the creditor does not get their money back but gets to keep the TC, while the borrower loses the TC, the borrowed money and the fee. Control Audit (2024/06/25): NOT FIXED Airswift modified the behavior but did not fully fix the issue. When the loan is accepted, the TC is transferred to the smart contract instead of the creditor. Later, the admin is able to transition an Active loan to the Defaulted final state, transferring the TC from the smart contract to the creditor. This state is equivalent to the Active state before the change (the creditor owns the TC), except the loan cannot be paid back anymore. If a loan is in the Paid state, a dissident creditor can refuse to close the loan, leading to the original problematic situation described above, with the exception of the creditor not keeping the TC. Control Audit (2024/07/02): FIXED Airswift merged the Paid and Close state by removing the close_loan function, and making payoff_loan transition to the Close state.",
+            "severity": "High",
+            "function": "",
+            "files": [
+                "argentina_pledge"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Loan offer creation can be censored by front-running",
+            "description": "A malicious user can prevent the creation of a loan offer by front-running it with the creation of a dummy loan offer with the same ID. For example, this enables them to either censor a particular user, or to prevent any user from posting a loan offer for a specific TC.",
+            "severity": "High",
+            "function": "",
+            "files": [
+                "argentina_pool"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Offer creation accepts untrusted pool_tokens",
+            "description": "An attacker can create offer with malicious token. During accept_offer or cancel_offer, an external call to this malicious token will be executed, leading to potential drain of users\u2019 funds. At the time of the control audit, pool_token has been renamed ext_token in the function body, and is checked against a whitelist.",
+            "severity": "High",
+            "function": "",
+            "files": [
+                "scf_pool"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Tokenized certificate owner can split before accepting an offer",
+            "description": "The owner of a tokenized certificate can split his token before accepting an offer, letting the offerer receiving a disabled tokenized certificate.",
+            "severity": "High",
+            "function": "accept_offer",
+            "files": [
+                "scf_pool"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Approvals cannot be revoked",
+            "description": "There is no dedicated functionality to revoke approvals, so the only way to revoke an approval is by giving it to a bogus address.",
+            "severity": "Medium",
+            "function": "",
+            "files": [
+                "argentina_pledge"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Untrusted contract call in accept_load_offer",
+            "description": "A malicious user can publish a loan offer with an arbitrary TC. If a user accepts this offer, the TC\u2019s transfer function is called which can in turn perform arbitrary operations, such as transferring the victim\u2019s funds to the attacker.",
+            "severity": "Medium",
+            "function": "",
+            "files": [
+                "argentina_pool"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Token approval can\u2019t be deleted",
+            "description": "The approval set for a given token can\u2019t be deleted, it can only be overwritten. This forces owners to approve their self to delete an approval.",
+            "severity": "Medium",
+            "function": "",
+            "files": [
+                "scf_soroban"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Offer creation accepts non-existing tokenized certificate contracts and identifiers",
+            "description": "A user can create offers for non-existing TC contracts and non-existing token identifiers Control Audit (2024/06/25): PARTIAL FIX. Airswift stated that they will filter out invalid offers on their front-end. TC contracts are now called at creation time, but still not verified. Thus, invalid TC contracts are possible.",
+            "severity": "Medium",
+            "function": "create_offer",
+            "files": [
+                "scf_pool"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "User may be censored through front-running",
+            "description": "The offer_id parameter passed as input must be unique and not used. An attacker can use this to censor a user by creating 0 amount offers with the same identifier through front-running.",
+            "severity": "Medium",
+            "function": "",
+            "files": [
+                "scf_pool"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Unbounded storage of DataKey::FileHashes(i128)",
+            "description": "Storage indexed by DataKey::FileHashes(i128) is unbounded, which can lead to high costs or Denial of Service when accessing it. The file hashes are stored as a Vec<String>, while hashes have a limited size.",
+            "severity": "Low",
+            "function": "",
+            "files": [
+                "argentina_pledge"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Mismatched storage type of DataKey::Owner(i128)",
+            "description": "Values written to DataKey::Owner(i128) are of type Option<Address>, while values read from it are of type Address.",
+            "severity": "Low",
+            "function": "",
+            "files": [
+                "argentina_pledge"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Mismatched storage type of DataKey::Approval(ApprovalKey::ID(i128))",
+            "description": "Values written to DataKey::Approval(ApprovalKey::ID(i128)) are of type Option<Address>, while values read from it are of type Address.",
+            "severity": "Low",
+            "function": "",
+            "files": [
+                "argentina_pledge"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Too small type for TC amount",
+            "description": "A TC\u2019s value (\u201camount\u201d) is stored as a u32, limiting its value to $232\u22121\u2248$4 B.",
+            "severity": "Low",
+            "function": "mint",
+            "files": [
+                "argentina_pledge"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Redeem time\u2019s validity is not checked at mint time",
+            "description": "When minting a new TC, the administrator can set the redeem time in the past, allowing users to pledge and redeem the TC at the same time.",
+            "severity": "Low",
+            "function": "mint",
+            "files": [
+                "argentina_pledge"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Split may be smaller than 10% of the root\u2019s total_amount",
+            "description": "If the sum of the split token is less than the parent token, an additional child is created with the remaining value, but this value can be less than 10% of the root\u2019s total_amount. Because splits are limited in depth, and because only one small sub-TC may be created per split, this issue is classified as LOW.",
+            "severity": "Low",
+            "function": "split",
+            "files": [
+                "scf_soroban"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Uncapped number of verifiable credentials per token",
+            "description": "The administrator can add an infinite number of VC strings to a token. This can lead to resource exhaustion when retrieving these strings through the vc view entrypoint.",
+            "severity": "Low",
+            "function": "add_vc",
+            "files": [
+                "scf_soroban"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Warnings emitted during the compilation",
+            "description": "During the compilation, cargo emitted 1 warning. See Appendix B",
+            "severity": "Informational",
+            "function": "",
+            "files": [
+                "argentina_pledge"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Improper type for TC IDs",
+            "description": "Tokenized Certificate IDs can never be negative, but are stored as i128. Unsigned values avoid some overhead in sign handling.",
+            "severity": "Informational",
+            "function": "",
+            "files": [
+                "argentina_pledge"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Warnings emitted during the compilation",
+            "description": "During the compilation, cargo emitted 5 warnings.",
+            "severity": "Informational",
+            "function": "",
+            "files": [
+                "argentina_pledge"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Unused DataKey variants",
+            "description": "Four (4) variants of DataKey are never used.",
+            "severity": "Informational",
+            "function": "",
+            "files": [
+                "argentina_pool"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Fixed-point variable has limited resolution",
+            "description": "The value stored at DataKey::RatePercent is used as a 2-decimal fixed point number. This limits its resolution to 1%, while its upper bound is unrealistically high at 2^32\u22121/100.",
+            "severity": "Informational",
+            "function": "calculate_scaled_amount_with_interest",
+            "files": [
+                "argentina_pool"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Bad public variable name",
+            "description": "A \u201crate\u201d is a ratio between two quantities, most often one quantity with respect to time. In this context, the fee added is fixed.",
+            "severity": "Informational",
+            "function": "",
+            "files": [
+                "argentina_pool"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Superfluous field in Loan",
+            "description": "The id field in Loan is superfluous and takes up persistent storage space. In every occurrence of its usage, its value is available elsewhere.",
+            "severity": "Informational",
+            "function": "",
+            "files": [
+                "argentina_pool"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Superfluous liquidity token",
+            "description": "The liquidity token is a standard token created by and for the pool. It can be exchanged at any time at a rate of 1 : 1 with the external token. The pool only performs basic mint and burn operations. Thus, the token is superfluous and can be replaced with the external token directly.",
+            "severity": "Informational",
+            "function": "",
+            "files": [
+                "argentina_pool"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Storage keys are not standardized",
+            "description": "The storage keys in the Tokenized Certificate contract are initialized with a variant of the DataKey enumeration as symbol, except for the order information that is initialized with the \"ORDERINFO\" string as symbol.",
+            "severity": "Informational",
+            "function": "",
+            "files": [
+                "scf_soroban"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Unused data key variants",
+            "description": "Four (4) variants of DataKey are never used.",
+            "severity": "Informational",
+            "function": "",
+            "files": [
+                "scf_soroban"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "The end_time can be configured to a past timestamp",
+            "description": "The initialization of the Tokenized Certificate contract allows setting the end timestamp to the past.",
+            "severity": "Informational",
+            "function": "initialize",
+            "files": [
+                "scf_soroban"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Verifiable Credential can be any format",
+            "description": "The verifiable credential attached to a tokenized certificate can be any format. Control Audit (2024/06/25): SUFFICIENT MITIGATION VCs now have an upper bound on their length and their count. Considering that JSON validation is expensive on-chain and that this data is not used on-chain, we consider the mitigation sufficient.",
+            "severity": "Informational",
+            "function": "add_vc",
+            "files": [
+                "scf_soroban"
+            ],
+            "impacted_code": ""
+        }
+    ]
+}

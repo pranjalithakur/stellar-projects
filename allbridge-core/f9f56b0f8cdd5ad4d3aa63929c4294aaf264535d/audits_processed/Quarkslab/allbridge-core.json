@@ -1,0 +1,81 @@
+{
+    "project_name": "Allbridge Soroban Bridge",
+    "audit_firm": "Quarkslab SAS",
+    "chain": "Stellar",
+    "commit_hash": "f9f56b0f8cdd5ad4d3aa63929c4294aaf264535d",
+    "github_repo_url": "https://github.com/allbridge-io/allbridge-core-soroban-contracts",
+    "findings": [
+        {
+            "title": "Admin can drain stablecoin liquidity",
+            "description": "The administrator can drain stablecoins deposited in the Pool by modifying the Bridge address and executing a swap using swap_from_v_usd.",
+            "severity": "Medium",
+            "function": "set_bridge",
+            "files": null,
+            "impacted_code": "pub fn set_bridge(env: Env, bridge: Address) -> Result<(), Error> { ... }"
+        },
+        {
+            "title": "Lack of input sanitization in admin functions",
+            "description": "Multiple variables set by the administrator are percentage. But the setter functions lack input sanitization to ensure that the values are not greater than 100%.\nAffected functions include set_fee_share, set_admin_fee_share, and set_balance_ratio_min_bp.",
+            "severity": "Low",
+            "function": "setters",
+            "files": null,
+            "impacted_code": "pub fn set_fee_share(env: Env, fee_share_bp: u128) -> Result<(), Error> {...} pub fn set_balance_ratio_min_bp(env: Env, balance_ratio_min_bp: u128) -> Result<(), Error> {...} pub fn set_admin_fee_share(env: Env, admin_fee_share_bp: u128) -> Result<(), Error> {...}"
+        },
+        {
+            "title": "Tests reproduce the code logic",
+            "description": "When testing a functionality, tests compute values the same way as the smart contract. If there is a bug in the smart contract, it will be reproduced in the test case and won\u2019t be caught.",
+            "severity": "Informational",
+            "function": "",
+            "files": [
+                "tests/src/messenger.rs"
+            ],
+            "impacted_code": null
+        },
+        {
+            "title": "Bridge implements an insecure pattern",
+            "description": "The current implementation of swap_and_bridge checks that a Pool contract is associated to the user-controlled token address argument after calling this address.",
+            "severity": "Informational",
+            "function": "swap_and_bridge",
+            "files": [
+                "contracts/bridge/src/methods/public/swap_and_bridge.rs"
+            ],
+            "impacted_code": "pub fn swap_and_bridge(env: Env, ...) -> Result<(), Error> {...}"
+        },
+        {
+            "title": "Superfluous storage DataKey::ReceivedMessage",
+            "description": "CWE-561: Dead Code\nThe boolean stored at DataKey::ReceivedMessage in contracts/messenger/src/storage/message.rs is never read.\nInstead, the smart contract only checks whether the key exists or not.",
+            "severity": "Informational",
+            "function": "",
+            "files": [
+                "contracts/messenger/src/storage/message.rs"
+            ],
+            "impacted_code": "pub fn has_received_message(env: &Env, message: BytesN<32>) -> bool {...} pub fn set_received_message(env: &Env, message: BytesN<32>) {...}"
+        },
+        {
+            "title": "Unused variant DataKey::Admin",
+            "description": "CWE-561: Dead Code\nThe DataKey::Admin variant in contracts/gas_oracle/src/data_key.rs is never used.\nInstead, the smart contract uses the symbol_short!(\"Admin\") key defined in common/bridge_storage/src/admin.rs.",
+            "severity": "Informational",
+            "function": "",
+            "files": [
+                "contracts/gas_oracle/src/data_key.rs"
+            ],
+            "impacted_code": "#[contracttype] pub enum DataKey { ChainData(u32), Admin, }"
+        },
+        {
+            "title": "Admin fees seem to be incorrect",
+            "description": "The current configuration indicates that 0.1% of the total collected fees are allocated to the administrator. This configuration is likely incorrect.",
+            "severity": "Informational",
+            "function": "initialize",
+            "files": null,
+            "impacted_code": null
+        },
+        {
+            "title": "Multiple casting from u128 to i128",
+            "description": "Multiple u128 variables are cast to i128 using the 'as' keyword. This casting may silently overflow.",
+            "severity": "Informational",
+            "function": "deposit",
+            "files": null,
+            "impacted_code": null
+        }
+    ]
+}

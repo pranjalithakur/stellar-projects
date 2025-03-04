@@ -1,0 +1,7 @@
+# Audit Information
+
+Each relevant smart contract directory contains a README with more detail on its usage. 
+1. The `scf_soroban` and `scf_pool` smart contracts are used in the standard use case of the supply chain finance system. `scf_soroban` represents a tokenized certificate, and `scf_pool` is the contract the backend uses to control loaning of these tokenized certificates. The `scf_soroban` smart contract introduces a method to "split" the value of tokenized certificates so that portions of the funding can be shared with a supplier company's upstream suppliers. 
+2. The `argentina_pledge` and `argentina_pool` smart contracts are the equivalents of the above contracts for tokenizing and loaning invoices in the so-called "Argentina case" workflow of the supply chain finance system. The `argentina_pledge` contract is more similar to a traditional NFT compared to `scf_soroban`, but minted tokens always belong to the smart contract until a user deposits a specified amount of USDC or some other external token to the contract to receive the minted token.
+3. The `token` smart contract is taken from https://github.com/stellar/soroban-examples and used in the `argentina_pool` smart contract to mint liquidity pool tokens.
+4. The `contract_deployer` smart contract is used by the backend system to automatically deploy an instance of the `scf_soroban` smart contract for each root-level invoice to be tokenized. 

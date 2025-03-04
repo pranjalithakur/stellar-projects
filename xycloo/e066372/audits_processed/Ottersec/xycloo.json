@@ -1,0 +1,60 @@
+{
+    "project_name": "xycloans",
+    "audit_firm": "OtterSec",
+    "chain": "Soroban",
+    "commit_hash": "e066372",
+    "github_repo_url": "https://github.com/xycloo/xycloans",
+    "findings": [
+        {
+            "title": "Rounding Error",
+            "description": "compute_fee_earned calculates the earned fee for a user based on their balance and specific fee per share values. The current implementation utilizes fixed_mul_ceil for multiplying the fee difference by the user\u2019s balance. The ceil rounding method rounds the result up to the nearest integer. In certain scenarios, this may result in a situation where users with small deposits benefit unfairly, draining the pool at the expense of users with larger deposits.",
+            "severity": "Critical",
+            "function": "compute_fee_earned",
+            "files": [
+                "pool/src/math.rs"
+            ],
+            "impacted_code": "pub fn compute_fee_earned (\n    user_balance :i128,\n    fee_per_share_universal :i128,\n    fee_per_share_particular :i128,\n)->i128{\n    user_balance\n        .fixed_mul_ceil (\n            fee_per_share_universal .sub(fee_per_share_particular ),\n            STROOP.into(),\n        )\n        .unwrap()\n}"
+        },
+        {
+            "title": "Untracked Dust Accumulation Due To Yield Calculation",
+            "description": "There is a potential problem with funds becoming stuck in the pool due to dust resulting from yield calculation within update_fee_per_share_universal. Due to the small size of these amounts, they may not be efficiently usable or withdrawable by users.",
+            "severity": "Low",
+            "function": "update_fee_per_share_universal",
+            "files": [
+                "pool/src/rewards.rs"
+            ],
+            "impacted_code": "pub(crate) fn update_fee_per_share_universal (e:&Env,collected :i128){\n    let fee_per_share_universal = get_fee_per_share_universal (e);\n    let total_supply = get_tot_supply (e);\n    \n    let adjusted_fee_per_share_universal =\n        compute_fee_per_share (fee_per_share_universal ,collected ,total_supply );\n    put_fee_per_share_universal (e,adjusted_fee_per_share_universal );\n}"
+        },
+        {
+            "title": "Unused Enum Variants",
+            "description": "The DataKey enumeration includes several variants (storage types). If these variants are not utilized or referenced elsewhere in the contract, they contribute to unnecessary storage and it is advisable to remove them to simplify the code.",
+            "severity": "Informational",
+            "function": null,
+            "files": [
+                "pool/src/types.rs"
+            ],
+            "impacted_code": "pub enum DataKey {\n    ProtocolFees ,\n    TokenId,\n    Admin,\n    TotSupply ,\n    TotalDeposited ,\n    FlashLoan ,\n    FlashLoanB ,\n    Balance(Address),\n    FeePerShareUniversal ,\n    FeePerShareParticular (Address),\n    MaturedFeesParticular (Address),\n}"
+        },
+        {
+            "title": "Code Refactoring",
+            "description": "1. The current code does not explicitly check whether the provided amount in deposit, withdraw, and borrow is greater than zero. Allowing amounts less than or equal to zero may result in unexpected behavior or undesired state changes in the contract.\n2. In factory, simplify the pool_address derivation in deploy_pool by utilizing deploy::with_current_contract.\n3. The existing code lacks a dedicated mechanism to ensure that the pool balance consistently stays equal to or exceeds the total pool supply. Without this check, there is a potential risk that the pool balance falls below the total supply.",
+            "severity": "Informational",
+            "function": null,
+            "files": [
+                "factory/src/contract.rs",
+                "soroban-sdk/src/deploy.rs"
+            ],
+            "impacted_code": "fn deploy_pool (env:Env,token_address :Address,salt:BytesN<32>)->Result<Address,Error>{ ,!\n[...]\nlet pool_address =env\n    .deployer ()\n    .with_address (env.current_contract_address (),salt)\n    .deploy(read_pool_hash (&env));\n[...]\n}\n\npub fn with_current_contract (\n    &self,\n    salt:impl IntoVal<Env,BytesN<32>>,\n)->DeployerWithAddress {\n    DeployerWithAddress {\n        env:self.env.clone(),\n        address:self.env.current_contract_address (),\n        salt:salt.into_val (&self.env),\n    }\n}"
+        },
+        {
+            "title": "Code Maturity",
+            "description": "1. In contract, emission of the matured_updated event is limited to update_fee_rewards. However, other functions such as deposit, withdraw, and withdraw_matured also update matured fees without emitting the matured_updated event. To enhance transparency and completeness, include the emission of this event in those functions as well.\n2. The fees_deposited event within try_repay is emitted to indicate the deposit of fees into the pool. However, the actual implementation passes amount as the third argument to the event, representing the borrowed amount and not the deposited fees.\n3. The receiver currently lacks visibility into the borrowed amount and corresponding fees. Adjust the callback invoked in the receiver contract to include additional parameters communicating information about the borrowed amount and associated fees.",
+            "severity": "Informational",
+            "function": null,
+            "files": [
+                "pool/src/token_utility.rs"
+            ],
+            "impacted_code": "pub(crate) fn try_repay (\n[...]\namount:i128,\n)->Result<(),Error>{\n[...]\n    transfer_from_to_pool (e,client,receiver_id ,&(amount+fees))?;\n    events::fees_deposited (&e,receiver_id ,amount);\n    Ok(())\n}"
+        }
+    ]
+}

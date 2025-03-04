@@ -1,0 +1,69 @@
+{
+    "project_name": "Blend",
+    "audit_firm": "Script3 Ltd",
+    "chain": "Stellar/Soroban",
+    "commit_hash": "5a64f8b9a8472b232f9fefe861b2638993b894c8",
+    "github_repo_url": "",
+    "findings": [
+        {
+            "title": "BL-001 - \"Dead-end\" flows (resource limits)",
+            "description": "This issue was raised by the Blend developer team at an early stage of our audit, and independently from it. They discovered that under specific flows and given certain user states (balance, positions) - the Soroban resource limit is invariably hit, causing some code and underlying logic to be impossible to execute. In the provided scenario - the most resource-intensive code pertained to the health check, which reads the asset reserve information from ledger storage, resulting in significant IO utilization for each supported asset in the pool. The impact, as illustrated by the developers - could be lack of ability to liquidate users who hold a large number of assets. Since the number of assets scales IO utilization linearly, we suggested setting a hard limit to the number of supported assets per pool. From a more strategic perspective - we suggest adding the following steps to the development and testing cycle: 1. Setting a high watermark at 80-90% of the Soroban resource limit, which will serve as a safety buffer 2. Profiling all unit tests to ensure they remain under the high watermark 3. For the health check flow and other flows deemed problematic - determine the scaling factors - for instance, the amount of asset reserve balances held by one user - and limit them in code.",
+            "severity": "CRITICAL",
+            "function": null,
+            "files": [
+                "pool - health check, others"
+            ],
+            "impacted_code": null
+        },
+        {
+            "title": "BL-002 - BLND reward loss during interval between emission cycles",
+            "description": "The weekly emissions cycle is triggered manually upon a contract-call to the backstop module. The emitter module mints 1 BLND per second, which it deposits to the backstop independently of the backstop emissions cycle update. During the emissions cycle update - the last update time is tracked by the ledger timestamp - if the current timestamp is less than a week after the currently saved timestamp, the update is aborted. Otherwise, the emissions per second and subsequently the BLND reward balance is determined for each pool in the reward zone, according to its share in the backstop. An issue arises when the emissions cycle update is invoked later than exactly 1 week after the previous one - since in any \u201cgap\u201d period, BLND that is minted and distributed by the emitter will be left inaccessible by the backstop - since it can only distribute a week\u2019s quanta of BLND in discrete, nonoverlapping periods, which have arbitrary start and end periods. For example - consider the following scenario: 1. At point T: The emissions cycle is updated, setting T to be the last update time 2. At point T + 1 week: the emissions cycle is NOT updated for some reason 3. At point T + 2 weeks, the emissions cycle is updated, causing 1 weeks worth of BLND to be distributed from the backstop to the pools In this scenario - during the two weeks between T and T+2 - only 1 weeks worth of BLND was distributed from the backstop to the pools, but 2 weeks worth of BLND was distributed from the emitter to the backstop - resulting in 1 week of BLND becoming \u201cstuck\u201d in the backstop. Our recommendation is to consolidate the calculation so it is tracked with an index that is directly coupled to the time passed - that way there will be no discrepancies between the BLND per second calculated in the emitter and the backstop. This issue was raised in real time during our review, and was already planned for mitigation at the time of this document's writing.",
+            "severity": "MEDIUM",
+            "function": "update_emissions_cycle",
+            "files": [
+                "backstop"
+            ],
+            "impacted_code": null
+        },
+        {
+            "title": "BL-003 - Incomplete validation of contract types in backstop deposit flow",
+            "description": "When depositing to the backstop, the address of the pool for which the funds will serve as insurance is provided as part of the contract call. However, there is no validation that the address belongs to a pool belonging to the same backstop instance, or to any pool at all. As a result - it is possible to deposit to the backstop, and potentially earn interest and rewards without ever risking any funds. Practically, this does not lead to an attack due to parallel constraints in other contract flows which need to run for interest and rewards to be paid out. However, we recommend adding an explicit check that the pool address to be deposited to is indeed a pool instantiated by the correct factory. This issue was raised in real time during our review, and was already planned for mitigation at the time of this document's writing.",
+            "severity": "HIGH",
+            "function": "execute_deposit",
+            "files": [
+                "backstop"
+            ],
+            "impacted_code": null
+        },
+        {
+            "title": "BL-004 - Unearned reward emission in intersection of reward zone growth and emissions cycle update",
+            "description": "This is a very minor, anecdotal issue related to the way the reward and emissions cycles. Usually, when a pool is entered into the reward zone, it is done no sooner than 5 days prior to the emissions cycle weekly update. This ensures that backstop depositors cannot manipulate their balances in order to enter or remain in the reward zone. However, this time lock does not apply to new slots in the reward zone, which open up every 97 days. As such, an actor can time the intersection of these two cycles to enter the reward zone without necessarily holding eligible amounts of funds. We recommend that the time lock be applied to entry into open slots in the reward zone, even if it means they remain empty for that time lock period.",
+            "severity": "INFO",
+            "function": "add_to_reward_zone, update_emissions_cycle",
+            "files": [
+                "backstop"
+            ],
+            "impacted_code": null
+        },
+        {
+            "title": "BL-005 - Lack of validation that filler state is different from the user address in fill_user_liq_auction",
+            "description": "The fill_user_liq_auction function is responsible for transferring outstanding liabilities and collateral from the liquidated user to the liquidator. We recommend adding a check here that the liquidator address is not the same as the liquidated address. While it is currently impossible to create a situation where this occurs - relatively minor changes to the code in the future could expose this issue to exploitation.",
+            "severity": "LOW",
+            "function": "fill_user_liq_auction",
+            "files": [
+                "pool"
+            ],
+            "impacted_code": null
+        },
+        {
+            "title": "BL-006 - Incorrect bounds check of reactivity constant in require_valid_reserve_metadata",
+            "description": "According to the whitepaper, the reactivity constant should be bounded from 0.001 to 0.00001. However, the code in require_valid_reserve_metadata only checks that it is above 0.0005. If this is intentional, a comment should be added or the whitepaper could be clarified further.",
+            "severity": "INFO",
+            "function": "require_valid_reserve_metadata",
+            "files": [
+                "pool"
+            ],
+            "impacted_code": null
+        }
+    ]
+}

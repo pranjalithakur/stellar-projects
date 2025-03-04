@@ -1,0 +1,101 @@
+{
+    "project_name": "Soroban - Band Standard Reference Contract",
+    "audit_firm": "Runtime Verification Inc.",
+    "chain": "Stellar",
+    "commit_hash": "c21f943249d79608994e89f2ea03b4a5f090f080",
+    "github_repo_url": "",
+    "findings": [
+        {
+            "title": "Potential denial of service (DoS) attack on relay() function call",
+            "description": "When adding a symbol rate through the relay() function call, the argument resolving_time is an absolute time. There is no guarantee that this resolving time was the real timestamp. If this parameter is set up to a far future time, like a month's equivalent time, it could block any updates to the symbol's rate before that time, constituting a DoS attack.",
+            "severity": "High",
+            "function": "relay",
+            "files": [
+                "bandprotocol/band-std-reference-contracts-soroban/src/contract.rs"
+            ],
+            "impacted_code": "fn relay(env: Env, from: Address, symbol_rates: Vec<(Symbol, u64)>, resolve_time: u64, request_id: u64) {"
+        },
+        {
+            "title": "new_admin was not given the Relayer role when transfer_admin() was called",
+            "description": "The admin should be granted all the subroles in the contract, including the relayer role. There should be an add_relayer call for the new_admin after the write_admin() call.",
+            "severity": "Low",
+            "function": "transfer_admin",
+            "files": [
+                "bandprotocol/band-std-reference-contracts-soroban/src/contract.rs"
+            ],
+            "impacted_code": "write_admin(&env, &new_admin);"
+        },
+        {
+            "title": "force_relay should have limited access to avoid unwanted overwrites",
+            "description": "The current access right to force_relay() function is granted to all relayers. Since force_relay() would overwrite the rate data, the access control mechanism leaves the attack surface too large. Any of the relayers, if compromised, could contaminate the rate data or cause DoS attacks.",
+            "severity": "High",
+            "function": "force_relay",
+            "files": [
+                "bandprotocol/band-std-reference-contracts-soroban/src/contract.rs"
+            ],
+            "impacted_code": "if !is_relayer(&env, &from) {"
+        },
+        {
+            "title": "relay function will always fail if MaxTTL is set to be the ledger's max_entry_ttl",
+            "description": "If MaxTTL equals max_allowable_ttl, setting a new ref_data will always fail due to extend_ttl returning an error. The condition should be changed from ttl > max_allowable_ttl to ttl >= max_allowable_ttl.",
+            "severity": "Medium",
+            "function": "",
+            "files": [
+                "bandprotocol/band-std-reference-contracts-soroban/src/storage/ttl.rs"
+            ],
+            "impacted_code": "let max_allowable_ttl = env.storage().max_ttl(); if ttl > max_allowable_ttl {"
+        },
+        {
+            "title": "Missing check for non-zero rate in RefData::new and ReferenceData::new",
+            "description": "RefData::new allows RefData::rate to be set to zero, which is problematic since RefData update enforces that rate is not zero. Similar issue applies to ReferenceData::new.",
+            "severity": "Low",
+            "function": "RefData::new, ReferenceData::new",
+            "files": [],
+            "impacted_code": ""
+        },
+        {
+            "title": "Users are recommended to verify the contract logic before invoking the contract functions",
+            "description": "The contract admin can upgrade the contract at any time to any logic without external authorization. Users should verify the contract's status before interacting with it to ensure it hasn't been updated with unverified changes.",
+            "severity": "Informative",
+            "function": "",
+            "files": [],
+            "impacted_code": ""
+        },
+        {
+            "title": "Use a smaller threshold to avoid frequent write to the ttl storage",
+            "description": "Setting a smaller threshold for ttl bumping can reduce costs associated with storage writes, as the current threshold results in more frequent bumping than necessary.",
+            "severity": "Medium",
+            "function": "",
+            "files": [
+                "src/storage/ttl.rs"
+            ],
+            "impacted_code": "let max_ttl = env.storage().max_ttl(); env.storage().instance().extend_ttl(max_ttl, max_ttl);"
+        },
+        {
+            "title": "The contract function address() to get the contract id seems redundant",
+            "description": "The address() function is redundant since the contract id must be known before the contract is called.",
+            "severity": "Informative",
+            "function": "address",
+            "files": [
+                "bandprotocol/band-std-reference-contracts-soroban/src/contract.rs"
+            ],
+            "impacted_code": "fn address(env: Env) -> Address { env.current_contract_address() }"
+        },
+        {
+            "title": "The effect of delist function can be easily wiped out by relay or force_relay",
+            "description": "The delist function's impact can be nullified immediately by a following relay or force_relay call, which implicitly relists the symbol if not found in storage.",
+            "severity": "Informative",
+            "function": "delist",
+            "files": [],
+            "impacted_code": ""
+        },
+        {
+            "title": "MaxTTL is not configurable",
+            "description": "Once the contract is initialized, MaxTTL cannot be changed, presenting a problem if a more precise maximum timeout is later needed.",
+            "severity": "Informative",
+            "function": "",
+            "files": [],
+            "impacted_code": ""
+        }
+    ]
+}

@@ -1,0 +1,166 @@
+{
+    "project_name": "xCall Smart Contract",
+    "audit_firm": "Coinspect",
+    "chain": "Stellar Soroban",
+    "commit_hash": "",
+    "github_repo_url": "",
+    "findings": [
+        {
+            "title": "Anyone can prevent sources and destinations updates on the xCall Manager contract",
+            "description": "Anyone can cause a Denial-of-Service (DoS) to the contract by filling up its instance storage. This could prevent ICON governance from adding new source and destination protocols.",
+            "severity": "High",
+            "function": "white_list_actions",
+            "files": [
+                "balanced-soroban-contracts/contracts/xcall_manager/src/contract.rs"
+            ],
+            "impacted_code": "pub fn white_list_actions(e: Env, action: Bytes) {\n    let actions = WhiteListActions::new(DataKey::WhiteListedActions);\n    actions.add(&e, action);\n}"
+        },
+        {
+            "title": "Lack of privilege segregation",
+            "description": "The connection contract currently defines two distinct roles or addresses authorized to interact with it: the upgrade authority, responsible for upgrading the contract's functionality, and the admin, who is permitted to set and collect fees as well as to support the message exchange operations.",
+            "severity": "Low",
+            "function": "recv_message",
+            "files": [
+                "xcall-multi/contracts/soroban/contracts/centralized-connection/src/contract.rs"
+            ],
+            "impacted_code": "pub fn recv_message(\n    env: Env,\n    src_network: String,\n    conn_sn: u128,\n    msg: Bytes,\n) -> Result<(), ContractError> {\n    helpers::ensure_admin(&env)?;"
+        },
+        {
+            "title": "Asset manager contract returns information for non-existing token addresses",
+            "description": "The asset manager contract returns an empty, yet valid, TokenData object when a query is made for a non-existing token address.",
+            "severity": "Low",
+            "function": "read_token_data",
+            "files": [
+                "balanced-soroban-contracts/contracts/asset_manager/src/contract.rs"
+            ],
+            "impacted_code": "pub fn read_token_data(env: &Env, token_address: Address) -> TokenData {\n    let default = TokenData { percentage: 0, period: 0, last_update: 0, current_limit: 0 };\n    let key = DataKey::TokenData(token_address);\n    env.storage().persistent().get(&key).unwrap_or(default)\n}"
+        },
+        {
+            "title": "Anyone can write token data for arbitrary tokens",
+            "description": "Anyone can cause the contract to update the last_update field for an arbitrary token address due to the absence of authorization enforcement in the public verify_withdraw function.",
+            "severity": "Low",
+            "function": "verify_withdraw",
+            "files": [
+                "balanced-soroban-contracts/contracts/asset_manager/src/contract.rs"
+            ],
+            "impacted_code": "pub fn verify_withdraw(env: Env, token: Address, amount: u128) -> Result<bool, ContractError> {\n    let balance = Self::get_token_balance(&env, token.clone());\n    let limit = Self::calculate_limit(&env, balance, token.clone())?;\n    if balance - amount < limit {\n        panic_with_error!(&env, ContractError::ExceedsWithdrawLimit);\n    };\n    let mut data: TokenData = read_token_data(&env, token.clone());\n    data.current_limit = limit as u64;"
+        },
+        {
+            "title": "Unsafe integer casting",
+            "description": "The transfer_token_to function casts the u128 amount variable to i128 without considering potential overflows.",
+            "severity": "None",
+            "function": "transfer_token_to",
+            "files": [
+                "balanced-soroban-contracts/contracts/asset_manager/src/contract.rs",
+                "balanced-soroban-contracts/contracts/balanced_doller/src/balanced_dollar.rs"
+            ],
+            "impacted_code": "fn transfer_token_to(e: &Env, from: Address, token: Address, to: Address, amount: u128) { //ok\n    let token_client = token::Client::new(e, &token);\n    token_client.transfer(&from, &to, &(amount as i128));\n}"
+        },
+        {
+            "title": "Anyone can trigger rollbacks without authorization",
+            "description": "Anyone can force a ResponseFailure for a any CallMessageWithRollback, which allows executing the rollback.",
+            "severity": "High",
+            "function": "handle_error",
+            "files": [
+                "xcall-multi/contracts/soroban/contracts/xcall/src/handle_message.rs"
+            ],
+            "impacted_code": "pub fn handle_error(env: Env, sender: Address, sequence_no: u128) -> Result<(), ContractError> {\n    handle_message::handle_error(&env, sender, sequence_no)\n}"
+        },
+        {
+            "title": "Anyone can drain asset manager token holdings",
+            "description": "Anyone can withdraw any token held by the contract to an arbitrary address.",
+            "severity": "High",
+            "function": "withdraw",
+            "files": [
+                "balanced-soroban-contracts/contracts/asset_manager/src/contract.rs"
+            ],
+            "impacted_code": "pub fn withdraw(\n    e: &Env,\n    from: Address,\n    token: Address,\n    to: Address,\n    amount: u128,\n) -> Result<(), ContractError> {\n    if amount <= 0 {\n        return Err(ContractError::AmountIsLessThanMinimumAmount);\n    }"
+        },
+        {
+            "title": "Insufficient unit tests and lack of integration tests",
+            "description": "Coinspect did not identify an integration testing suite covering all contracts within scope.",
+            "severity": "Medium",
+            "function": "",
+            "files": [],
+            "impacted_code": ""
+        },
+        {
+            "title": "Message Request in reply could be sent to wrong destination",
+            "description": "The handle_reply function processes a MessageRequest contained within a CSMessageResult, however, does not validate whether the reply's destination (to) matches the address that initiated the original request.",
+            "severity": "Medium",
+            "function": "handle_reply",
+            "files": [],
+            "impacted_code": "pub fn handle_reply(\n    env: &Env,\n    rollback: &Rollback,\n    reply: &mut CSMessageRequest,\n) -> Result<(), ContractError> {\n    if rollback.to().nid(&env) != reply.from().nid(&env) {\n        return Err(ContractError::InvalidReplyReceived);\n    }"
+        },
+        {
+            "title": "Attempting to convert time diff to seconds",
+            "description": "When computing the time_diff in the calculate_limit function, the resulting difference of two timestamps is divided by 1000 in an attempt to convert it from milliseconds to seconds.",
+            "severity": "None",
+            "function": "calculate_limit",
+            "files": [
+                "balanced-soroban-contracts/contracts/asset_manager/src/contract.rs"
+            ],
+            "impacted_code": "let time_diff = (&env.ledger().timestamp() - last_update) / 1000;"
+        },
+        {
+            "title": "Zero value deposits allowed",
+            "description": "The send_deposit_message function in the asset manager contract allows zero-value deposits, as there are no restrictions in place to prevent this.",
+            "severity": "None",
+            "function": "send_deposit_message",
+            "files": [
+                "balanced-soroban-contracts/contracts/asset_manager/src/contract.rs"
+            ],
+            "impacted_code": "pub fn withdraw(\n    e: &Env,\n    from: Address,\n    token: Address,\n    to: Address,\n    amount: u128,\n) -> Result<(), ContractError> {\n    if amount <= 0 {"
+        },
+        {
+            "title": "xCall contract network not computed inside the contract",
+            "description": "Currently, the xcall_network_address value (the NetworkAddress for the xCall contract) is set via the config parameter passed to the initialize function.",
+            "severity": "None",
+            "function": "initialize",
+            "files": [
+                "balanced-soroban-contracts/contracts/asset_manager/src/contract.rs"
+            ],
+            "impacted_code": "pub fn initialize(env: Env, registry: Address, admin: Address, config: ConfigData) {"
+        },
+        {
+            "title": "Using the same error for multiple issues hinders testing",
+            "description": "The handle_request function returns the same error for two distinct issues.",
+            "severity": "None",
+            "function": "handle_request",
+            "files": [
+                "xcall-multi/contracts/soroban/contracts/xcall/src/handle_message.rs"
+            ],
+            "impacted_code": "if src_net != from_net {\n        return Err(ContractError::ProtocolsMismatch);\n    }\n    let source = sender.to_string();"
+        },
+        {
+            "title": "Unreachable code",
+            "description": "Unreachable code makes smart contracts harder to understand and maintain.",
+            "severity": "None",
+            "function": "verify_protocols",
+            "files": [
+                "contracts/xcall_manager/src/contract.rs"
+            ],
+            "impacted_code": "if !Self::verify_protocols(e.clone(), protocols.clone())? {\n    return Err(ContractError::ProtocolMismatch);\n};"
+        },
+        {
+            "title": "Deposit function does not enforce destination address",
+            "description": "The deposit function in the asset manager contract allows a None to parameter, raising uncertainty about whether this behavior is intentional.",
+            "severity": "None",
+            "function": "deposit",
+            "files": [
+                "balanced-soroban-contracts/contracts/asset_manager/src/contract.rs"
+            ],
+            "impacted_code": "pub fn deposit(\n    e: Env,\n    from: Address,\n    token: Address,\n    amount: u128,\n    to: Option<String>,"
+        },
+        {
+            "title": "Using old Stellar Soroban SDK version",
+            "description": "An older dependency is more likely to contain known security issues that have been discovered and exploited over time.",
+            "severity": "None",
+            "function": "",
+            "files": [
+                "Cargo.toml"
+            ],
+            "impacted_code": ""
+        }
+    ]
+}

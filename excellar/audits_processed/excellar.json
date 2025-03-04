@@ -1,0 +1,78 @@
+{
+    "project_name": "Excellar",
+    "audit_firm": "CoinFabrik",
+    "chain": "",
+    "commit_hash": "17c344f2ea30646c761dcd6590cdb99c88a44bfe",
+    "github_repo_url": "https://github.com/excellar-labs/excellar-contracts.git",
+    "findings": [
+        {
+            "title": "CR-01 Current Balance Ignored in Rewards",
+            "description": "In the audited contract, the current balance is ignored, even if it was held for a long time by the user, for the purpose of gaining rewards. For example, an account that receives 1000 tokens will get 0 rewards even after 2 days of holding the position. Recommendation: Take into consideration the current position to calculate the awarded rewards. In order to do so, call checkpoint_reward in the claim_reward and admin_claim_reward functions.",
+            "severity": "Critical",
+            "function": "claim_reward",
+            "files": [
+                "token/src/contract.rs"
+            ],
+            "impacted_code": "The checkpoint_reward call was added."
+        },
+        {
+            "title": "ME-01 Stealthy Token Minting",
+            "description": "When rewards are claimed via the claim_reward or admin_claim_reward functions, new tokens are generated and the total supply is increased but no event is emitted to account for those, unlike when new tokens are generated via the mint function.",
+            "severity": "Medium",
+            "function": "",
+            "files": [
+                "token/src/contract.rs:67,81,92",
+                "token/src/balance.rs:28-32"
+            ],
+            "impacted_code": "Token minting events were added to the reward claiming functions."
+        },
+        {
+            "title": "MI-01 Unbound Instance Storage",
+            "description": "KYC-approved addresses, blacklisted addresses and AMM addresses are stored in the instance storage. When each address is added an extra cost is incurred on every interaction with the contract, and if the required storage exceeds 64Kb it may lead to a denial of service.",
+            "severity": "Minor",
+            "function": "",
+            "files": [
+                "token/src/admin.rs:22,47,60"
+            ],
+            "impacted_code": "Now entries are stored as recommended."
+        },
+        {
+            "title": "MI-02 Claiming Rewards Frequently Leads to Better Rewards",
+            "description": "Claiming rewards frequently increases the total obtained rewards, as the funds obtained in the early reward claims are used to calculate the latter reward claims. Please note that funds need to be transferred between accounts to workaround CR-01.",
+            "severity": "Minor",
+            "function": "",
+            "files": [
+                "token/src/contract.rs:70"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "MI-03 Unbound AMM Depositors",
+            "description": "Each time a new account makes a deposit to an AMM account its address is added to the depositors of this AMM account. The number of depositors is unbounded so it may exceed the maximum of 64Kb allowed for a storage entry.",
+            "severity": "Minor",
+            "function": "",
+            "files": [
+                "token/src/amm.rs:69"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "MI-04 Extra Rewards When Going Back to not AMM",
+            "description": "Sometimes, when transfers are made to AMM accounts and then the accounts are moved back to non-AMM accounts extra rewards appear. It was reproduced with specific steps resulting in more rewards than expected.",
+            "severity": "Minor",
+            "function": "",
+            "files": [],
+            "impacted_code": "The test stated above passes now."
+        },
+        {
+            "title": "MI-05 Transfers not Considered for Rewards",
+            "description": "When funds are transferred away from an AMM to another AMM in the audited contract this fund release is not taken into account to decide the rewards distribution between all the non-AMM accounts that funded the AMM.",
+            "severity": "Minor",
+            "function": "",
+            "files": [
+                "token/src/contract.rs:245-249,266-270"
+            ],
+            "impacted_code": ""
+        }
+    ]
+}

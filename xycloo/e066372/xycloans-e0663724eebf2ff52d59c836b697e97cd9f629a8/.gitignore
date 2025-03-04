@@ -1,0 +1,6 @@
+**/target
+.soroban
+deprecated
+.DS_Store
+Cargo.lock
+test_snapshots

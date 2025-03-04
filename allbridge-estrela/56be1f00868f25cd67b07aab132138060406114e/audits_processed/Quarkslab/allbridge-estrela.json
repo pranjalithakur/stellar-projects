@@ -1,0 +1,67 @@
+{
+    "project_name": "Allbridge Estrela",
+    "audit_firm": "Quarkslab",
+    "chain": "Stellar",
+    "commit_hash": "56be1f00868f25cd67b07aab132138060406114e",
+    "github_repo_url": "https://github.com/allbridge-io/dex-soroban-contracts",
+    "findings": [
+        {
+            "title": "Overflow risk for some values",
+            "description": "An overflow can happen in Pool::get_d when depositing liquidity. This can lead to incorrect bookkeeping of the pool\u2019s liquidity tokens, enabling an attacker to withdraw more tokens than deposited.",
+            "severity": "High",
+            "function": "get_d",
+            "files": null,
+            "impacted_code": "pub fn get_d(&self, x: u128, y: u128) -> u128 { // function implementation }"
+        },
+        {
+            "title": "Centralization risk for trusted admin",
+            "description": "Factory has an Admin address with privileged rights to perform admin tasks such as pool contract\u2019s code update. A malicious update could lead to deploying malicious pool contracts.",
+            "severity": "Low",
+            "function": null,
+            "files": null,
+            "impacted_code": null
+        },
+        {
+            "title": "Centralization risk for trusted admin",
+            "description": "Pool has an Admin address with privileged rights to perform admin tasks such as pool contract\u2019s code update. A malicious update could allow an admin to pull user\u2019s funds.",
+            "severity": "Low",
+            "function": null,
+            "files": null,
+            "impacted_code": null
+        },
+        {
+            "title": "Pool creation may be capped after several deployments",
+            "description": "The pairs map in FactoryInfo ledger entry may not be readable or writable if too many pools are deployed.",
+            "severity": "Info",
+            "function": null,
+            "files": null,
+            "impacted_code": null
+        },
+        {
+            "title": "Overflow in internal function",
+            "description": "The cbrt function can panic for some values within its domain but currently cannot be reached.",
+            "severity": "Info",
+            "function": "cbrt",
+            "files": [
+                "common/shared/src/utils/num.rs"
+            ],
+            "impacted_code": "pub fn cbrt(n: &U256) -> u128 { // function implementation }"
+        },
+        {
+            "title": "Full fees on liquidity withdrawal",
+            "description": "Liquidity providers pay fees on the full liquidity they withdraw, which may be unexpected by users.",
+            "severity": "Info",
+            "function": null,
+            "files": null,
+            "impacted_code": null
+        },
+        {
+            "title": "Code duplication for sending rewards",
+            "description": "Pending rewards for liquidity providers are computed separately in get_pending and claim_rewards.",
+            "severity": "Info",
+            "function": null,
+            "files": null,
+            "impacted_code": null
+        }
+    ]
+}

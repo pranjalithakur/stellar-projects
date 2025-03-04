@@ -1,0 +1,57 @@
+{
+    "project_name": "ReflectorOracleProtocol",
+    "audit_firm": "OtterSec",
+    "chain": "Stellar",
+    "commit_hash": "14b1bd3",
+    "github_repo_url": "github.com/reflector-network/reflector-contract",
+    "findings": [
+        {
+            "title": "UnsafeAssetIndexTruncation",
+            "description": "The current implementation retrieves the asset index as a u32 and truncates it to a u8 without proper bounds checking. This unsafe truncation results in incorrect asset prices with an index greater than or equal to 256.",
+            "severity": "High",
+            "function": null,
+            "files": null,
+            "impacted_code": null
+        },
+        {
+            "title": "Lack of Timestamp Sanitization",
+            "description": "The absence of a sanity check in set_price exposes the protocol to potential issues by permitting the insertion of invalid timestamps.",
+            "severity": "Medium",
+            "function": "set_price",
+            "files": null,
+            "impacted_code": "pub fn set_price(e: Env, admin: Address, updates: Vec<i128>, timestamp: u64)\n...\n+ let timeframe: u64 = e.get_resolution().into();\n+ let ledger_timestamp = now(&e);\n+ if timestamp == 0 || !timestamp.is_valid_timestamp(timeframe) || timestamp\n> ledger_timestamp { ,!\n+ panic_with_error!(&e, Error::InvalidTimestamp);\n+ }\n..."
+        },
+        {
+            "title": "Missing Admin Verification",
+            "description": "The existing implementation of config lacks a crucial validation step to confirm that the caller\u2019s address aligns with the authorized admin address (config.admin). This oversight poses a notable security risk, as providing an incorrect address to config.admin may result in unauthorized control over the deployed contract.",
+            "severity": "Low",
+            "function": "config",
+            "files": null,
+            "impacted_code": "pubfnconfig(e:Env,admin:Address,config:ConfigData ){\nadmin.require_auth ();\nife.is_initialized (){\ne.panic_with_error (Error::AlreadyInitialized );\n}\ne.set_admin (&config.admin);\n..."
+        },
+        {
+            "title": "Inconsistency Due To Incomplete Price Data",
+            "description": "The current implementation of twap uses prices to retrieve the latest price data necessary for calculating the time-weighted average price. It computes the average from these data points. This approach precisely calculates the time-weighted average price across N equally spaced values. However, it becomes inaccurate if a value is missing in the sequence, leading to unequal intervals between the data points and resulting in an average that does not accurately represent the time-weighted average price.",
+            "severity": "Low",
+            "function": "twap",
+            "files": null,
+            "impacted_code": null
+        },
+        {
+            "title": "Handling Division By Zero",
+            "description": "In the current implementation, when the divisor (priceB) is zero, div_floor returns zero. While it may be unlikely for the backend to push such a price, it is crucial to consider and handle such exceptional cases robustly. As an improvement, update div_floor to panic when the divisor is zero, ensuring that any attempt to perform division by zero results in a clear and explicit error.",
+            "severity": "Informational",
+            "function": "div_floor",
+            "files": null,
+            "impacted_code": "fndiv_floor (dividend :i128,divisor:i128,decimals :u32)->i128{\nif(dividend ==0)||(divisor ==0){\n0_i128;\n}\n..."
+        },
+        {
+            "title": "Asset Management Optimization",
+            "description": "__add_assets may be optimized to enhance efficiency and readability and minimize resource costs.",
+            "severity": "Informational",
+            "function": "__add_assets",
+            "files": null,
+            "impacted_code": "fn__add_assets (e:&Env,assets:Vec<Asset>){\nletassets_len =assets.len();\nifassets_len ==0||assets_len >=256{\npanic_with_error !(&e,Error::InvalidUpdateLength );\n}\nletmutpresented_assets =e.get_assets ();\nletmutassets_indexes :Vec<(Asset,u32)>=Vec::new(&e);\nforassetinassets.iter(){\n//check if the asset has been already added\nife.get_asset_index (&asset).is_some(){\npanic_with_error !(&e,Error::AssetAlreadyExists );\n}\npresented_assets .push_back (asset.clone());\nassets_indexes .push_back ((asset,presented_assets .len()-1));\n}\ne.set_assets (presented_assets );\nfor(asset,index)inassets_indexes .iter(){\ne.set_asset_index (&asset,index);\n}\n}"
+        }
+    ]
+}

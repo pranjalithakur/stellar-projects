@@ -1,0 +1,15 @@
+rootProject.name = 'xcall-multi'
+include(
+        'test-lib',
+        'xcall',
+        'xcall-lib',
+        'centralized-connection'
+)
+
+include(':dapp-simple')
+project(':dapp-simple').projectDir = file("example-dapps/dapp-simple")
+project(':dapp-simple').name = "dapp-simple"
+
+include(':dapp-multi-protocol')
+project(':dapp-multi-protocol').projectDir = file("example-dapps/dapp-multi-protocol")
+project(':dapp-multi-protocol').name = "dapp-multi-protocol"

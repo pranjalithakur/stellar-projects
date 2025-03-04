@@ -1,0 +1,10 @@
+.idea
+.vscode/settings.json
+
+**/target
+**/test_snapshots
+
+integration-tests/.contracts
+integration-tests/node_modules
+
+.DS_Store

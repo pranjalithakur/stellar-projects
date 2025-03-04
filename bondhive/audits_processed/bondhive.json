@@ -1,0 +1,89 @@
+{
+    "project_name": "BondHive",
+    "audit_firm": "CoinFabrik",
+    "chain": "",
+    "commit_hash": "f115457909194201576d1ca0c1134ac6314df4af",
+    "github_repo_url": "https://github.com/Bond-Hive/soroban-contracts.git",
+    "findings": [
+        {
+            "title": "Initialize bond_contract Again",
+            "description": "An attacker may invoke the initialize function of the bond_contract. Doing so will change various contract parameters and reset values, which can lock contract funds. Recommendation is to check if the initialize function has not yet run by checking if the admin has been set.",
+            "severity": "Critical",
+            "function": "initialize",
+            "files": [
+                "bond_contract/src/lib.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Initialize farm_contract Again",
+            "description": "An attacker may invoke the initialize function of the farm_contract. Doing so will change various contract parameters and reset values, allowing an attacker to transfer away all the reward funds. Recommendation is to check if the initialize function has not yet run by checking if the admin has been set.",
+            "severity": "Critical",
+            "function": "initialize",
+            "files": [
+                "farm_contract/src/lib.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Anyone Can Withdraw Unallocated Rewards",
+            "description": "In the withdraw_unallocated_rewards function of the farm_contract, the admin account is taken from a parameter instead of being fetched from storage, allowing an attacker to retrieve all the rewards. Recommendation is to use the get_admin function to obtain the admin's address instead of receiving it as a parameter.",
+            "severity": "Critical",
+            "function": "withdraw_unallocated_rewards",
+            "files": [
+                "farm_contract/src/lib.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Locked Funds",
+            "description": "In the farm_contract, if a user deposits some tokens and then transfers the receipt tokens obtained to another account, neither of the accounts can withdraw the deposited funds and/or its corresponding rewards. Recommendation is to not use receipt tokens in the farm_contract.",
+            "severity": "High",
+            "function": "",
+            "files": [
+                "farm_contract/src/lib.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Unbound Instance Storage",
+            "description": "In the farm_contract, maps stored in the DataKey::UserMap and DataKey::PoolMap instance slots have unbounded size, which can lead to excessive costs and denial of service if they grow too large. Recommendation is to store each entry of each map in its own persistent storage slot.",
+            "severity": "Medium",
+            "function": "",
+            "files": [
+                "farm_contract/src/lib.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Funds Locked Through Overflow",
+            "description": "In the farm_contract, potential overflow in the deposit and withdraw functions may prevent permanent deposits or withdrawals. To solve this, ensure multiplications will not overflow by restricting settings for pool reward ratios, maximum deposits, and maturity date.",
+            "severity": "Medium",
+            "function": "",
+            "files": [
+                "farm_contract/src/lib.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Minted Shares Slippage in bond_contract",
+            "description": "Race condition may occur if an admin changes the quote while a deposit operation is made, potentially affecting the number of shares minted. Recommendation is to add a parameter to the deposit function with the minimum number of shares to be obtained, allowing mitigation by the EOA.",
+            "severity": "Minor",
+            "function": "",
+            "files": [
+                "bond_contract/src/lib.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "No Initialization Event",
+            "description": "During initialization of the farm_contract, no event is generated to inform of the state change, which would aid in analyzing the contract's behavior. It is recommended to log an event with all the state persisted in the initialization.",
+            "severity": "Minor",
+            "function": "",
+            "files": [
+                "farm_contract/src/lib.rs"
+            ],
+            "impacted_code": ""
+        }
+    ]
+}
