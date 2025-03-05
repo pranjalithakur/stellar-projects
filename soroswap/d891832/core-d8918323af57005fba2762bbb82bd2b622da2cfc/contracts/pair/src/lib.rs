@@ -85,9 +85,9 @@ impl SoroswapPairTrait for SoroswapPair {
             return Err(SoroswapPairError::InitializeAlreadyInitialized);
         }
 
-        if token_0 >= token_1 {
-            return Err(SoroswapPairError::InitializeTokenOrderInvalid);
-        }
+        // if token_0 >= token_1 {
+        //     return Err(SoroswapPairError::InitializeTokenOrderInvalid);
+        // }
 
         put_factory(&e, factory);
 
