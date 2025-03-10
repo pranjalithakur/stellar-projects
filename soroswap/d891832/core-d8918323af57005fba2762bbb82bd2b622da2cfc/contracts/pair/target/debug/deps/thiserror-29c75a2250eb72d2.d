@@ -1,0 +1,9 @@
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/pair/target/debug/deps/libthiserror-29c75a2250eb72d2.rmeta: /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.48/src/lib.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.48/src/aserror.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.48/src/display.rs
+
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/pair/target/debug/deps/libthiserror-29c75a2250eb72d2.rlib: /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.48/src/lib.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.48/src/aserror.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.48/src/display.rs
+
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/pair/target/debug/deps/thiserror-29c75a2250eb72d2.d: /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.48/src/lib.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.48/src/aserror.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.48/src/display.rs
+
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.48/src/lib.rs:
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.48/src/aserror.rs:
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.48/src/display.rs:

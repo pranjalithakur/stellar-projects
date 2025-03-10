@@ -1,0 +1,10 @@
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/pair/target/debug/deps/libspki-064063d5578b6609.rmeta: /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/lib.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/algorithm.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/error.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/spki.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/traits.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/../README.md
+
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/pair/target/debug/deps/spki-064063d5578b6609.d: /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/lib.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/algorithm.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/error.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/spki.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/traits.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/../README.md
+
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/lib.rs:
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/algorithm.rs:
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/error.rs:
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/spki.rs:
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/traits.rs:
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spki-0.7.2/src/../README.md:

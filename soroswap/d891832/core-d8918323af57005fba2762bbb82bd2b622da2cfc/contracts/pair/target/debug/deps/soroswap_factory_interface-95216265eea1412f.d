@@ -1,0 +1,6 @@
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/pair/target/debug/deps/libsoroswap_factory_interface-95216265eea1412f.rmeta: /Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/factory-interface/src/lib.rs /Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/factory-interface/src/error.rs
+
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/pair/target/debug/deps/soroswap_factory_interface-95216265eea1412f.d: /Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/factory-interface/src/lib.rs /Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/factory-interface/src/error.rs
+
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/factory-interface/src/lib.rs:
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/factory-interface/src/error.rs:

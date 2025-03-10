@@ -1,0 +1,8 @@
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/pair/target/dylint/target/nightly-2024-07-11-aarch64-apple-darwin/release/deps/libcrate_git_revision-85fa01525037fec1.rmeta: /Users/pranjalithakur/.cargo/registry/src/index.crates.io-6f17d22bba15001f/crate-git-revision-0.0.6/src/lib.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-6f17d22bba15001f/crate-git-revision-0.0.6/src/test.rs
+
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/pair/target/dylint/target/nightly-2024-07-11-aarch64-apple-darwin/release/deps/libcrate_git_revision-85fa01525037fec1.rlib: /Users/pranjalithakur/.cargo/registry/src/index.crates.io-6f17d22bba15001f/crate-git-revision-0.0.6/src/lib.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-6f17d22bba15001f/crate-git-revision-0.0.6/src/test.rs
+
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/pair/target/dylint/target/nightly-2024-07-11-aarch64-apple-darwin/release/deps/crate_git_revision-85fa01525037fec1.d: /Users/pranjalithakur/.cargo/registry/src/index.crates.io-6f17d22bba15001f/crate-git-revision-0.0.6/src/lib.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-6f17d22bba15001f/crate-git-revision-0.0.6/src/test.rs
+
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-6f17d22bba15001f/crate-git-revision-0.0.6/src/lib.rs:
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-6f17d22bba15001f/crate-git-revision-0.0.6/src/test.rs:

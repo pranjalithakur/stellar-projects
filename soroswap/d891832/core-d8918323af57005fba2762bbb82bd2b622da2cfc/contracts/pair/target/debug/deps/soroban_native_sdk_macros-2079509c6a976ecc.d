@@ -1,0 +1,7 @@
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/pair/target/debug/deps/libsoroban_native_sdk_macros-2079509c6a976ecc.dylib: /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-native-sdk-macros-20.0.0-rc2/src/lib.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-native-sdk-macros-20.0.0-rc2/src/derive_fn.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-native-sdk-macros-20.0.0-rc2/src/derive_type.rs
+
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/pair/target/debug/deps/soroban_native_sdk_macros-2079509c6a976ecc.d: /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-native-sdk-macros-20.0.0-rc2/src/lib.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-native-sdk-macros-20.0.0-rc2/src/derive_fn.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-native-sdk-macros-20.0.0-rc2/src/derive_type.rs
+
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-native-sdk-macros-20.0.0-rc2/src/lib.rs:
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-native-sdk-macros-20.0.0-rc2/src/derive_fn.rs:
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-native-sdk-macros-20.0.0-rc2/src/derive_type.rs:
