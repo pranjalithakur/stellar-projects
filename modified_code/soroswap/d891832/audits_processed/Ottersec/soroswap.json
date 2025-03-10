@@ -1,0 +1,109 @@
+{
+    "project_name": "soroswap-core",
+    "audit_firm": "OtterSec",
+    "chain": "Soroban",
+    "commit_hash": "d891832",
+    "github_repo_url": "https://github.com/soroswap/core",
+    "findings": [
+        {
+            "title": "Incorrect Use Of Instance Storage",
+            "description": "SoroswapFactory currently utilizes instance storage to store all token pairs. As the documentation describes, this instance storage is designed for small, frequently utilized data directly associated with the contract instance. Thus, storing vectors of pair addresses (allPairs) in the instance storage results in inadequate storage space, particularly as the data of pair tokens grows limitlessly in a permissionless manner, swiftly surpassing the constrained storage capacity. Malicious users may exploit this by flooding the instance storage with fake token pairs, resulting in a denial of service scenario as the storage space is exhausted.",
+            "severity": "High",
+            "function": "add_pair_to_all_pairs",
+            "files": [
+                "factory/src/lib.rs"
+            ],
+            "impacted_code": "fn add_pair_to_all_pairs (e:&Env,pair_address :&Address){\n// Get the current `allPairs` vector from storage\nlet mut all_pairs = get_all_pairs (e);\n// Push the new `pair_address` onto the vector\nall_pairs .push_back (pair_address .clone());\n// Save the updated `allPairs` vector to storage\ne.storage().instance ().set(&DataKey::AllPairs ,&all_pairs );\n}"
+        },
+        {
+            "title": "Incorrect Implementation Of Burn Logic",
+            "description": "Liquidity pool tokens represent the ownership of liquidity provided to a liquidity pool. The contract mints them when a user provides liquidity to the pool and burns them when the user wants to withdraw their liquidity. While burning liquidity pool tokens of a Soroswap pair pool, the burn method in its current implementation burns tokens (amount) from an account (from), but it fails to adjust the number of tokens in that liquidity pool. Thus, when a liquidity provider calls burn to withdraw their liquidity and claim the fees, the contract only burns the tokens from the liquidity provider\u2019s account. Still, it does not adjust the pool\u2019s internal state (total_shares), resulting in an inconsistency where the LP token supply suggests the presence of more liquidity than what is contained in the pool. This disparity in the amount of liquidity pool tokens may impact the decentralized exchange\u2019s pricing mechanism and overall stability.",
+            "severity": "Low",
+            "function": "burn",
+            "files": [
+                "src/soroswap_pair_token/contract.rs"
+            ],
+            "impacted_code": "fn burn(e:Env,from:Address,amount:i128){\nfrom.require_auth ();\ncheck_nonnegative_amount (amount);\ne.storage()\n.instance ()\n.bump(INSTANCE_LIFETIME_THRESHOLD ,INSTANCE_BUMP_AMOUNT );\nspend_balance (&e,from.clone(),amount);\nTokenUtils ::new(&e).events().burn(from,amount);\n}"
+        },
+        {
+            "title": "Rounding Error In Fee Calculation",
+            "description": "The protocol applies a 0.30% fee on the trade, which a user pays on invoking swap. The code calculates the fee by multiplying the input amount amount_0_in or amount_1_in by three and dividing the result by 1000, essentially calculating a 0.3% fee on the input amounts. However, these operations involve integer arithmetic, giving rise to rounding errors, especially when dealing with fractional percentages. The result of amount_0_in.checked_mul(3).unwrap() may not be perfectly divisible by 1000, which may truncate decimal values, resulting in the actual fee value to be rounded down to a lower amount, enabling the user to pay less fees.",
+            "severity": "Low",
+            "function": "swap",
+            "files": [
+                "pair/src/lib.rs"
+            ],
+            "impacted_code": "fn swap(e:Env,amount_0_out :i128,amount_1_out :i128,to:Address)->Result<(),SoroswapPairError >{\n[...]\nif amount_0_in ==0 && amount_1_in ==0{\nreturn Err(SoroswapPairError ::SwapInsufficientInputAmount );\n}\nif amount_0_in <0 || amount_1_in <0{\nreturn Err(SoroswapPairError ::SwapNegativesInNotSupported );\n}\nlet fee_0 =(amount_0_in .checked_mul (3).unwrap()).checked_div (1000).unwrap();\nlet fee_1 =(amount_1_in .checked_mul (3).unwrap()).checked_div (1000).unwrap();\n[...]\n}"
+        },
+        {
+            "title": "Presence of Integer Overflow",
+            "description": "receive_balance reads the existing balance of a given address, adds the provided amount to it, and then writes the updated balance back to the storage. There is a potential integer overflow in the addition operation balance + amount, where if the sum of balance and amount exceeds the maximum representable value for the i128 data type, it will result in an overflow.",
+            "severity": "Informational",
+            "function": "receive_balance",
+            "files": [
+                "pair/src/soroswap_pair_token/balance.rs"
+            ],
+            "impacted_code": "pub fn receive_balance (e:&Env,addr:Address,amount:i128){\nlet balance = read_balance (e,addr.clone());\nwrite_balance (e,addr,balance +amount);\n}"
+        },
+        {
+            "title": "Missing Address Check",
+            "description": "Pair::new establishes a consistent ordering of token addresses within a pair. However, the current implementation lacks a check in Pair::new to ensure that when creating a new pair, the addresses a and b are distinct. Since Pair is intended to represent a unique pair of addresses, attempting to create a pair with identical addresses violates the expected semantics of a pair. Including a check for similar addresses during creation of a new pair will ensure an early failure in Pair::new, rather than causing an error in get_pair and pair_exists.",
+            "severity": "Informational",
+            "function": "new",
+            "files": [
+                "factory/src/lib.rs"
+            ],
+            "impacted_code": "pub fn new(a:Address,b:Address)->Self{\nif a<b{\nPair(a,b)\n}else{\nPair(b,a)\n}\n}pub fn new(a:Address,b:Address)->Self{\nif a==b{\npanic!(\"Same addresses\" );\n}\nif a<b{\nPair(a,b)\n}else{\nPair(b,a)\n}\n}"
+        },
+        {
+            "title": "Authorization Required For Token Transfer",
+            "description": "Soroswap pools needs user authorization to transfer tokens from the user to the pair. In swap_exact_tokens_for_tokens, require_auth is not invoked to validate and authorize token transfers during a swap.",
+            "severity": "Medium",
+            "function": "transfer",
+            "files": [
+                "pair/src/soroswap_pair_token/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Authorization Required For Token Transfer",
+            "description": "Soroswap pools necessitate user authorization to transfer tokens from the user to the pair. In swap_exact_tokens_for_tokens, require_auth is notinvoked to validate and authorize token transfers during a swap. While this is the method proposed by the Stellar Development Foundation, an issue arises when the router uses require_auth during the initial smart contract call, as malicious contracts can exploit this by inserting fraudulent authorization objects into the authorization tree. This deceptive tactic can lead to phishing attacks, where attackers trick users into validating dangerous tokens. Gaining wrongful authorization for external calls through transfer, they can exploit this to execute unauthorized transfers, stealing the user\u2019s entire balance of any token.",
+            "severity": "Medium",
+            "function": "transfer_from",
+            "files": [
+                "pair/src/soroswap_pair_token/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Authorization Required For Token Transfer",
+            "description": "Soroswap pools necessitate user authorization to transfer tokens from the user to the pair. In mint, require_auth is not invoked to validate and authorize token transfers during a swap. While this is the method proposed by the Stellar Development Foundation, an issue arises when the router uses require_auth during the initial smart contract call, as malicious contracts can exploit this by inserting fraudulent authorization objects into the authorization tree. This deceptive tactic can lead to phishing attacks, where attackers trick users into validating dangerous tokens. Gaining wrongful authorization for external calls through transfer, they can exploit this to execute unauthorized transfers, stealing the user\u2019s entire balance of any token.",
+            "severity": "Medium",
+            "function": "mint",
+            "files": [
+                "pair/src/soroswap_pair_token/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Authorization Required For Token Transfer",
+            "description": "Soroswap pools necessitate user authorization to transfer tokens from the user to the pair. In set_admin, require_auth is not invoked to validate and authorize token transfers during a swap. While this is the method proposed by the Stellar Development Foundation, an issue arises when the router uses require_auth during the initial smart contract call, as malicious contracts can exploit this by inserting fraudulent authorization objects into the authorization tree. This deceptive tactic can lead to phishing attacks, where attackers trick users into validating dangerous tokens. Gaining wrongful authorization for external calls through transfer, they can exploit this to execute unauthorized transfers, stealing the user\u2019s entire balance of any token.",
+            "severity": "Medium",
+            "function": "set_admin",
+            "files": [
+                "pair/src/soroswap_pair_token/contract.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "No input validation in initialize_pair",
+            "description": "There is no input validation in initialize_pair to check if token_0 >= token_1",
+            "severity": "Medium",
+            "function": "set_admin",
+            "files": [
+                "pair/src/lib.rs"
+            ],
+            "impacted_code": ""
+        }
+    ]
+}
