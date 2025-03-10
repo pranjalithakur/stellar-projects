@@ -1,0 +1,10 @@
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/pair/target/debug/deps/libcc-4172d846a1ca72cc.rmeta: /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.0.83/src/lib.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.0.83/src/os_pipe.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.0.83/src/os_pipe/unix.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.0.83/src/windows_registry.rs
+
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/pair/target/debug/deps/libcc-4172d846a1ca72cc.rlib: /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.0.83/src/lib.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.0.83/src/os_pipe.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.0.83/src/os_pipe/unix.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.0.83/src/windows_registry.rs
+
+/Users/pranjalithakur/Desktop/stellar-projects/soroswap/d891832/core-d8918323af57005fba2762bbb82bd2b622da2cfc/contracts/pair/target/debug/deps/cc-4172d846a1ca72cc.d: /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.0.83/src/lib.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.0.83/src/os_pipe.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.0.83/src/os_pipe/unix.rs /Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.0.83/src/windows_registry.rs
+
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.0.83/src/lib.rs:
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.0.83/src/os_pipe.rs:
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.0.83/src/os_pipe/unix.rs:
+/Users/pranjalithakur/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cc-1.0.83/src/windows_registry.rs:
