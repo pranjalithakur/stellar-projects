@@ -1,0 +1,274 @@
+{
+    "project_name": "Slender",
+    "audit_firm": "Certora",
+    "chain": "Stellar",
+    "commit_hash": "993fea5",
+    "github_repo_url": "https://github.com/eq-lab/slender",
+    "findings": [
+        {
+            "title": "Users can combine borrow + withdraw to open positions with arbitrary (positive) NPV",
+            "description": "In order to ensure the solvency of an over-collateralized borrowing & lending protocol, there is usually a minimal loan-to-value ratio that is required in order to open a position. In Slender\u2019s case this is expressed via the initial_health configuration parameter which is checked in line #105 of the do_borrow function. However, the withdraw function only checks that users have positive NPV but does not check that the NPV is greater or equal to initial health. An attacker can borrow and then withdraw in order to open \"bad positions\", causing the protocol to accumulate bad debt.",
+            "severity": "Critical",
+            "function": "do_borrow",
+            "files": [
+                "borrow.rs",
+                "withdraw.rs",
+                "finalize_transfer.rs"
+            ],
+            "impacted_code": "require_gte_initial_health(env, &account_data, amount_in_base)?;"
+        },
+        {
+            "title": "Transfer-and Burn-on-zero can cause liquidation to revert",
+            "description": "The functions transfer_on_liquidation, receive_balance, spend_balance, all panic if the amount parameter is non-positive. Liquidation would revert if liq_lp_amount turns out to be non-positive. In liquidations, allow transfer and burn of zero value to prevent reverts.",
+            "severity": "Critical",
+            "function": "transfer_on_liquidation",
+            "files": [
+                "liquidate.rs"
+            ],
+            "impacted_code": "s_token.transfer_on_liquidation(who, liquidator, &liq_lp_amount);"
+        },
+        {
+            "title": "Stellar\u2019s resource limit can block liquidations",
+            "description": "Due to Stellar\u2019s limit on I/O operations, the liquidation function will revert as soon as the number of reserves the user is using as collateral or borrowing is sufficiently large. Users might be able to borrow assets from the protocol while being immune to liquidations, effectively creating bad debt.",
+            "severity": "Critical",
+            "function": "liquidate",
+            "files": [
+                "liquidate.rs"
+            ],
+            "impacted_code": null
+        },
+        {
+            "title": "Liquidating small positions is not incentivized",
+            "description": "If a user\u2019s borrowing balance exceeds their total collateral value due to the value of collateral falling, or borrowed assets increasing, the liquidation mechanism allows the liquidator to buy the borrower\u2019s collateral at a better price. However, there is no restriction on opening positions with small values, so a bad actor can initiate a sybil attack on the protocol, accruing bad debt.",
+            "severity": "Critical",
+            "function": "liquidate",
+            "files": [
+                "liquidate.rs"
+            ],
+            "impacted_code": null
+        },
+        {
+            "title": "Incorrect rounding enables an attacker to drain funds from the protocol",
+            "description": "Roundings in DeFi should always favor the protocol. s_token_to_burn is rounded down instead of up, allowing attackers to withdraw more than they deposited.",
+            "severity": "Critical",
+            "function": "withdraw",
+            "files": [
+                "withdraw.rs"
+            ],
+            "impacted_code": "let (underlying_to_withdraw, s_token_to_burn) = if amount >= underlying_balance { (underlying_balance, collat_balance) } else { let s_token_to_burn = collat_coeff.recip_mul_int(amount).ok_or(Error::MathOverflowError)?; (amount, s_token_to_burn) };"
+        },
+        {
+            "title": "Liquidator can seize a bad position\u2019s collateral without repaying any of its debt",
+            "description": "If a user\u2019s NPV is sufficiently negative, it is possible for the liquidation bonus to reach 100%, which would cause debt_in_base to be zero.",
+            "severity": "High",
+            "function": "liquidate",
+            "files": [
+                "liquidate.rs"
+            ],
+            "impacted_code": "let zero_percent = FixedI128::from_inner(0); let initial_health_percent = FixedI128::from_percentage(read_initial_health(env)?).unwrap(); let npv_percent = FixedI128::from_rational(account_data.npv, total_collat_disc_after_in_base).ok_or(Error::LiquidateMathError)?;"
+        },
+        {
+            "title": "Lenders can be immediately liquidated once the protocol is unpaused",
+            "description": "Once the protocol has been unpaused, there is no \u201cgrace period\u201d granted to lenders, allowing them to be liquidated immediately if their position is underwater.",
+            "severity": "High",
+            "function": "liquidate",
+            "files": [
+                "liquidate.rs"
+            ],
+            "impacted_code": null
+        },
+        {
+            "title": "TWAP price calculation can be incorrect",
+            "description": "The function twap incorrectly assumes that the PriceData vector reported by the SEP-40 function prices is always sorted in descending order with respect to the timestamp.",
+            "severity": "High",
+            "function": "twap",
+            "files": [
+                "price_provider.rs"
+            ],
+            "impacted_code": "let price_curr = prices.get_unchecked(0); let price_prev = prices.get_unchecked(i - 1); let price_curr = prices.get_unchecked(i);"
+        },
+        {
+            "title": "The formula for NPV in the technical specification is unclear",
+            "description": "The documented formula for computing net position value does not match the actual code implementation. This can lead to misinterpretation by traders relying on documentation.",
+            "severity": "Medium",
+            "function": null,
+            "files": [],
+            "impacted_code": null
+        },
+        {
+            "title": "Precision loss issues: division-before-multiplication",
+            "description": "Division-before-multiplication leads to a loss of accuracy in arithmetic computations across multiple files.",
+            "severity": "Medium",
+            "function": null,
+            "files": [
+                "account_position.rs",
+                "deposit.rs",
+                "liquidate.rs",
+                "withdraw.rs",
+                "price_provider.rs"
+            ],
+            "impacted_code": "let compounded_balance = collat_coeff.mul_int(who_collat).ok_or(Error::CalcAccountDataMathError)?;"
+        },
+        {
+            "title": "Precision loss issues: double decimal conversion",
+            "description": "Double conversion via FixedI128 looses precision when the base asset decimals are greater than 9.",
+            "severity": "Medium",
+            "function": null,
+            "files": [
+                "price_provider.rs"
+            ],
+            "impacted_code": "median_twap_price.mul_int(amount) .and_then(|a| FixedI128::from_rational(a, 10i128.pow(config.asset_decimals))) .and_then(|a| a.to_precision(self.base_asset.decimals)).ok_or(Error::InvalidAssetPrice)"
+        },
+        {
+            "title": "Centralization Risk",
+            "description": "There is a single admin rule in the protocol. This presents a centralization risk that does not align with standard security principles.",
+            "severity": "Medium",
+            "function": null,
+            "files": [],
+            "impacted_code": null
+        },
+        {
+            "title": "There is no backup price feed",
+            "description": "Slender currently relies on a single SEP-40 compatible oracle, posing a risk if the oracle fails or reports bad data.",
+            "severity": "Medium",
+            "function": null,
+            "files": [],
+            "impacted_code": null
+        },
+        {
+            "title": "There is no stale price check",
+            "description": "Slender does not verify if the information from SEP-40 oracle is stale. This can lead to unintended behaviors.",
+            "severity": "Medium",
+            "function": null,
+            "files": [],
+            "impacted_code": null
+        },
+        {
+            "title": "The protocol lacks circuit breakers (such as min/max prices)",
+            "description": "The protocol does not have logic to recognize price outliers and prevent actions during extreme price events.",
+            "severity": "Medium",
+            "function": null,
+            "files": [
+                "price_provider.rs"
+            ],
+            "impacted_code": null
+        },
+        {
+            "title": "Some configuration parameters lack input validation",
+            "description": "Certain configuration setters lack necessary validation checks which can accept invalid parameters.",
+            "severity": "Low",
+            "function": "set_ir_params",
+            "files": [],
+            "impacted_code": "pub struct IRParams { pub alpha: u32, pub initial_rate: u32, pub max_rate: u32, pub scaling_coeff: u32, }"
+        },
+        {
+            "title": "Some of the names for the variables are misleading",
+            "description": "Variable names in account_positions.rs do not clearly reflect their value, leading to potential misunderstandings in the code's logic.",
+            "severity": "Informational",
+            "function": null,
+            "files": [
+                "account_positions.rs"
+            ],
+            "impacted_code": "let compounded_balance = debt_coeff.mul_int(who_debt).ok_or(Error::CalcAccountDataMathError)?;"
+        },
+        {
+            "title": "Replace 10i128.pow with 10i128.checked_pow",
+            "description": "Use of unprotected power operations can cause overflow. It is recommended to use checked variants to prevent overflow.",
+            "severity": "Informational",
+            "function": null,
+            "files": [],
+            "impacted_code": null
+        },
+        {
+            "title": "Some inline comments are inaccurate/outdated",
+            "description": "Comments do not match the implemented code logic, leading to potential misunderstanding among developers.",
+            "severity": "Informational",
+            "function": "calc_interest_rate",
+            "files": [
+                "rate.rs"
+            ],
+            "impacted_code": null
+        },
+        {
+            "title": "Flash loan event sometimes include irrelevant info",
+            "description": "Flash loan events may include a premium which is not charged if the user opts to borrow the assets, leading to misleading outputs.",
+            "severity": "Informational",
+            "function": null,
+            "files": [
+                "flash_loan.rs"
+            ],
+            "impacted_code": "event::flash_loan(env, who, receiver, &received_asset.asset, received_asset.amount, received_asset.premium);"
+        },
+
+        {
+            "title": "Access Control Bypass via Missing require_auth Check",
+            "description": "In withdraw.rs within the withdraw function, the require_auth check is removed. This bypasses the authentication mechanism, allowing unauthorized users to initiate withdrawals.",
+            "severity": "Critical",
+            "function": "withdraw",
+            "files": [
+                "contracts/pool/src/methods/withdraw.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Token Total Supply Not Decremented",
+            "description": "In withdraw.rs within the withdraw function, the code modification removes the decrementing of the token total supply after burning tokens. This results in an uncapped supply that may lead to accounting errors and potential inflation attacks.",
+            "severity": "High",
+            "function": "withdraw",
+            "files": [
+                "contracts/pool/src/methods/withdraw.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Incorrect Withdrawal Logic Using max Instead of min",
+            "description": "In withdraw.rs within the withdraw function, the use of max instead of min in calculating the withdrawal amount allows an attacker to withdraw more than the available balance, leading to potential over-withdrawal vulnerabilities.",
+            "severity": "High",
+            "function": "withdraw",
+            "files": [
+                "contracts/pool/src/methods/withdraw.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Rounding Error Due to Forced Integer Arithmetic",
+            "description": "In withdraw.rs within the withdraw function, the change forces integer arithmetic that truncates any fractional component. This rounding error may lead to an incorrect calculation of tokens to be burned, potentially causing exploitable discrepancies over multiple transactions.",
+            "severity": "Medium",
+            "function": "withdraw",
+            "files": [
+                "contracts/pool/src/methods/withdraw.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Access Control Bypass in borrow function",
+            "description": "No check in borrow.rs for function 'borrow' allows unauthorized users to invoke the borrow function without proper authentication.",
+            "severity": "Critical",
+            "function": "borrow",
+            "files": [
+                "contracts/pool/src/methods/borrow.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Missing Input Validation for Borrow Amount",
+            "description": "In borrow.rs function borrow does not validate that the borrowing amount is positive, potentially allowing zero or negative values.",
+            "severity": "High",
+            "function": "borrow",
+            "files": [
+                "contracts/pool/src/methods/borrow.rs"
+            ],
+            "impacted_code": ""
+        },
+        {
+            "title": "Incorrect Collateral Check Implementation",
+            "description": "No collateral check for users with collateral in borrow.rs in function do_borrow permits users with collateral to bypass intended safeguards, leading to an inconsistent or dangerous borrowing state.",
+            "severity": "High",
+            "function": "do_borrow",
+            "files": [
+                "contracts/pool/src/methods/borrow.rs"
+            ],
+            "impacted_code": ""
+        }
+    ]
+}
