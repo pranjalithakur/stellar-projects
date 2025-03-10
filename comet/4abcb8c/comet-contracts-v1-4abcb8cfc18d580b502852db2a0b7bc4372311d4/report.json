@@ -1,0 +1,202 @@
+{
+  "name": "Comet Contracts V1 4abcb8cfc18d580b502852db2a0b7bc4372311d4",
+  "date": "2025-03-06",
+  "summary": {
+    "executed_on": [
+      {
+        "name": "contracts",
+        "id": "path+file:///Users/pranjalithakur/Desktop/stellar-projects/comet/4abcb8c/comet-contracts-v1-4abcb8cfc18d580b502852db2a0b7bc4372311d4/contracts#0.0.7",
+        "relative_path": "contracts/Cargo.toml",
+        "absolute_path": "/Users/pranjalithakur/Desktop/stellar-projects/comet/4abcb8c/comet-contracts-v1-4abcb8cfc18d580b502852db2a0b7bc4372311d4/contracts/Cargo.toml"
+      },
+      {
+        "name": "factory",
+        "id": "path+file:///Users/pranjalithakur/Desktop/stellar-projects/comet/4abcb8c/comet-contracts-v1-4abcb8cfc18d580b502852db2a0b7bc4372311d4/factory#0.1.0",
+        "relative_path": "factory/Cargo.toml",
+        "absolute_path": "/Users/pranjalithakur/Desktop/stellar-projects/comet/4abcb8c/comet-contracts-v1-4abcb8cfc18d580b502852db2a0b7bc4372311d4/factory/Cargo.toml"
+      }
+    ],
+    "total_vulnerabilities": 3,
+    "by_severity": {
+      "medium": 1,
+      "enhancement": 2,
+      "minor": 0,
+      "critical": 0
+    },
+    "table": {
+      "header": {
+        "cells": [
+          {
+            "content": "Crate",
+            "color": {
+              "Importance": "Header"
+            }
+          },
+          {
+            "content": "Status",
+            "color": {
+              "Importance": "Header"
+            }
+          },
+          {
+            "content": "Critical",
+            "color": {
+              "Importance": "Header"
+            }
+          },
+          {
+            "content": "Medium",
+            "color": {
+              "Importance": "Header"
+            }
+          },
+          {
+            "content": "Minor",
+            "color": {
+              "Importance": "Header"
+            }
+          },
+          {
+            "content": "Enhancement",
+            "color": {
+              "Importance": "Header"
+            }
+          }
+        ]
+      },
+      "rows": [
+        {
+          "cells": [
+            {
+              "content": "contracts",
+              "color": "Default"
+            },
+            {
+              "content": "Compilation errors",
+              "color": {
+                "Importance": "Error"
+              }
+            },
+            {
+              "content": "N/A",
+              "color": "Default"
+            },
+            {
+              "content": "N/A",
+              "color": "Default"
+            },
+            {
+              "content": "N/A",
+              "color": "Default"
+            },
+            {
+              "content": "N/A",
+              "color": "Default"
+            }
+          ]
+        },
+        {
+          "cells": [
+            {
+              "content": "factory",
+              "color": "Default"
+            },
+            {
+              "content": "Analyzed",
+              "color": "Default"
+            },
+            {
+              "content": "0",
+              "color": "Default"
+            },
+            {
+              "content": "1",
+              "color": "Default"
+            },
+            {
+              "content": "0",
+              "color": "Default"
+            },
+            {
+              "content": "2",
+              "color": "Default"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "categories": [
+    {
+      "id": "Best Practices",
+      "name": "Soroban Version",
+      "vulnerabilities": [
+        {
+          "id": "soroban_version",
+          "name": "Soroban Version",
+          "short_message": "Use the latest version of Soroban",
+          "long_message": "Using a older version of Soroban can be dangerous, as it may have bugs or security issues. Use the latest version available.",
+          "severity": "Enhancement",
+          "help": "https://coinfabrik.github.io/scout-audit/docs/detectors/soroban/soroban-version"
+        },
+        {
+          "id": "storage_change_events",
+          "name": "Storage Change Events",
+          "short_message": "Consider emiting an event when storage is modified",
+          "long_message": "Emiting an event when storage changes is a good practice to make the contracts more transparent and usable to its clients and observers",
+          "severity": "Enhancement",
+          "help": "https://coinfabrik.github.io/scout-audit/docs/detectors/soroban/storage-change-events"
+        }
+      ]
+    },
+    {
+      "id": "Known Bugs",
+      "name": "Known Vulnerabilities",
+      "vulnerabilities": [
+        {
+          "id": "known_vulnerabilities",
+          "name": "Known Vulnerabilities",
+          "short_message": "This dependency has known vulnerabilities. Consider updating it or removing it.",
+          "long_message": "Using dependencies with known vulnerabilities can expose your project to security risks",
+          "severity": "Medium",
+          "help": "https://coinfabrik.github.io/scout-audit/docs/detectors/rust/known-vulnerabilities"
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": 0,
+      "occurrence_index": 1,
+      "category_id": "Known Bugs",
+      "vulnerability_id": "known_vulnerabilities",
+      "error_message": "Known vulnerability in curve25519-dalek version 4.1.2",
+      "span": "lib.rs:1:1 - 1:1",
+      "code_snippet": "",
+      "package": "factory",
+      "file_path": "factory/src/lib.rs"
+    },
+    {
+      "id": 1,
+      "occurrence_index": 1,
+      "category_id": "Best Practices",
+      "vulnerability_id": "soroban_version",
+      "error_message": "Use the latest version of Soroban",
+      "span": "lib.rs:1:1 - 1:1",
+      "code_snippet": "",
+      "package": "factory",
+      "file_path": "factory/src/lib.rs"
+    },
+    {
+      "id": 2,
+      "occurrence_index": 1,
+      "category_id": "Best Practices",
+      "vulnerability_id": "storage_change_events",
+      "error_message": "Consider emiting an event when storage is modified",
+      "span": "lib.rs:53:5 - 53:67",
+      "code_snippet": "pub fn init(e: Env, user: Address, pool_wasm_hash: BytesN<32>)",
+      "package": "factory",
+      "file_path": "factory/src/lib.rs"
+    }
+  ]
+}
